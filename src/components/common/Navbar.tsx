@@ -1,118 +1,208 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, LogOut, LayoutDashboard, Home, Building2, Info, LogIn } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useRouter, usePathname } from "next/navigation";
+import Cookies from "js-cookie";
+import Logo from "./Logo";
 
 export default function Navbar() {
+  const router = useRouter();
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  
+  // States
+  const [token, setToken] = useState<string | undefined>(undefined);
+  const [user, setUser] = useState<{name?: string; email?: string; role?: string } | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // ড্যাশবোর্ড পাথের হেল্পার ফাংশন (রোল অনুযায়ী রাউটিং)
-  const getDashboardPath = (role: string) => {
-    if (role === "admin") return "/dashboard/admin";
-    if (role === "landlord") return "/dashboard/landlord";
-    return "/dashboard/tenant";
+  // রাউট চেঞ্জ বা পেজ লোড হলে কুকির স্টেট সিঙ্ক করার জন্য
+  useEffect(() => {
+    const currentToken = Cookies.get("token");
+    setToken(currentToken);
+
+    if (currentToken) {
+      // আপনার লগইন/রেজিস্টার সাকসেস হলে যদি Cookies.set("user", JSON.stringify(data.user)) করে থাকেন
+      const userData = Cookies.get("user");
+      if (userData) {
+        try {
+          setUser(JSON.parse(userData));
+        } catch (e) {
+          setUser(null);
+        }
+      }
+    } else {
+      setUser(null);
+    }
+  }, [pathname]); // প্রতিবার রাউট চেঞ্জ হলে স্টেট রি-চেক করবে
+
+  const handleLogout = () => {
+    Cookies.remove("token");
+    Cookies.remove("user"); // ইউজার ডেটা থাকলে রিমুভ করবে
+    setToken(undefined);
+    setUser(null);
+    setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
+    router.push("/auth/login");
+    router.refresh(); // পেজ রিফ্রেশ করে ক্লায়েন্ট স্টেট ক্লিন করবে
   };
 
-  // ডাইনামিক নেভিগেশন লিঙ্কস (মোবাইল ও ডেক্সটপ দুটোর জন্যই)
-  const navLinks = (
-    <>
-      <li>
-        <Link href="/" className={pathname === "/" ? "active" : ""}>
-          <Home className="w-4 h-4" /> Home
-        </Link>
-      </li>
-      <li>
-        <Link href="/properties" className={pathname === "/properties" ? "active" : ""}>
-          <Building2 className="w-4 h-4" /> Properties
-        </Link>
-      </li>
-      <li>
-        <Link href="/about" className={pathname === "/about" ? "active" : ""}>
-          <Info className="w-4 h-4" /> About
-        </Link>
-      </li>
-    </>
-  );
-
   return (
-    <div className="navbar bg-base-100 shadow-sm border-b border-base-200 sticky top-0 z-50 px-4 md:px-8">
-      {/* Navbar Start: Brand Logo & Mobile Menu Trigger */}
-      <div className="navbar-start flex items-center">
-        <div className="dropdown">
-          <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden p-1 mr-2">
-            <Menu className="h-5 w-5" />
+    <nav className="w-full bg-white border-b border-slate-100 shadow-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16 items-center">
+          
+          {/* Logo Section */}
+          <div className="flex-shrink-0 flex items-center">
+            <Logo />
           </div>
-          <ul
-            tabIndex={0}
-            className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-52 gap-1 border border-base-200"
-          >
-            {navLinks}
-          </ul>
-        </div>
-        
-        {/* বাকি লোগো ডিলিট করে শুধু RentNest টেক্সট লোগো রাখা হলো */}
-        <Link href="/" className="text-xl font-bold tracking-tight text-primary">
-          RentNest
-        </Link>
-      </div>
 
-      {/* Navbar Center: Desktop Menu */}
-      <div className="navbar-center hidden lg:flex">
-        <ul className="menu menu-horizontal px-1 gap-2 font-medium">
-          {navLinks}
-        </ul>
-      </div>
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex space-x-8 items-center">
+            <Link href="/" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+              Home
+            </Link>
+            <Link href="/properties" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+              Properties
+            </Link>
+            <Link href="/about" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+              About
+            </Link>
+          </div>
 
-      {/* Navbar End: Auth Control */}
-      <div className="navbar-end gap-2">
-        {user ? (
-          /* লগইন করা থাকলে: প্রোফাইল ড্রপডাউন */
-          <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar placeholder border border-primary/20">
-              <div className="bg-neutral text-neutral-content w-10 rounded-full">
-                {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} />
-                ) : (
-                  <span className="text-xs font-bold">
-                    {user.name.substring(0, 2).toUpperCase()}
-                  </span>
+          {/* Desktop Right Side: Auth / Profile Dropdown */}
+          <div className="hidden md:flex items-center space-x-4">
+            {token ? (
+              <div className="relative">
+                {/* Profile Toggle Button */}
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center space-x-2 focus:outline-none bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl border border-slate-200 transition-all cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold uppercase text-sm">
+                    {user?.name?.charAt(0) || "U"}
+                  </div>
+                  <span className="text-sm font-medium text-slate-700 capitalize">{user?.name || "Profile"}</span>
+                  <svg className={`w-4 h-4 text-slate-500 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-slate-100">
+                      <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Signed in as</p>
+                      <p className="text-sm font-semibold text-slate-800 truncate">{user?.email || "user@example.com"}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-md capitalize">
+                        {user?.role || "User"}
+                      </span>
+                    </div>
+                    
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left block px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-semibold transition-colors border-t border-slate-50 cursor-pointer"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 )}
               </div>
-            </div>
-            <ul
-              tabIndex={0}
-              className="menu menu-sm dropdown-content mt-3 z-[1] p-3 shadow-xl bg-base-100 rounded-box w-56 border border-base-200 gap-2"
+            ) : (
+              <>
+                <Link href="/auth/login" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors">
+                  Login
+                </Link>
+                <Link href="/auth/register" className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all shadow-sm">
+                  Register
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Hamburger Button */}
+          <div className="flex md:hidden items-center">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-slate-600 hover:text-blue-600 focus:outline-none p-2"
             >
-              <li className="px-2 py-1.5 border-b border-base-200 mb-1">
-                <div className="flex flex-col items-start p-0">
-                  <span className="font-semibold text-base-content">{user.name}</span>
-                  <span className="text-xs uppercase badge badge-sm badge-outline badge-primary mt-1">
-                    {user.role}
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Mobile Responsive Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-slate-100 py-4 px-4 space-y-3 animate-fade-in">
+          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-slate-600 hover:text-blue-600 px-3 py-2 rounded-xl hover:bg-slate-50">
+            Home
+          </Link>
+          <Link href="/properties" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-slate-600 hover:text-blue-600 px-3 py-2 rounded-xl hover:bg-slate-50">
+            Properties
+          </Link>
+          <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-slate-600 hover:text-blue-600 px-3 py-2 rounded-xl hover:bg-slate-50">
+            About
+          </Link>
+          
+          <div className="pt-4 border-t border-slate-100">
+            {token ? (
+              <div className="space-y-2 px-3">
+                <div className="bg-slate-50 p-3 rounded-xl mb-3">
+                  <p className="text-xs text-slate-400">Account info</p>
+                  <p className="text-sm font-semibold text-slate-800 truncate">{user?.email}</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-md capitalize">
+                    {user?.role}
                   </span>
                 </div>
-              </li>
-              <li>
-                <Link href={getDashboardPath(user.role)}>
-                  <LayoutDashboard className="w-4 h-4" /> Dashboard
+                <Link
+                  href={`/dashboard/${user?.role || "tenant"}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block text-center w-full bg-slate-100 text-slate-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-slate-200"
+                >
+                  Go to Dashboard
                 </Link>
-              </li>
-              <li>
-                <button onClick={logout} className="text-error font-medium">
-                  <LogOut className="w-4 h-4" /> Logout
+                <button
+                  onClick={handleLogout}
+                  className="w-full bg-red-50 text-red-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-100 cursor-pointer"
+                >
+                  Logout
                 </button>
-              </li>
-            </ul>
+              </div>
+            ) : (
+              <div className="flex flex-col space-y-2 px-3">
+                <Link
+                  href="/auth/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block text-center w-full border border-slate-200 text-slate-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-slate-50"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/auth/register"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block text-center w-full bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
           </div>
-        ) : (
-          /* লগইন করা না থাকলে: ক্লিন স্ট্যান্ডার্ড বাটন */
-          <Link href="/login" className="btn btn-primary btn-sm px-4 text-white flex items-center gap-2 normal-case rounded-md">
-            <LogIn className="w-4 h-4" /> Login
-          </Link>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </nav>
   );
 }

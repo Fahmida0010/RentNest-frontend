@@ -1,15 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { 
-  User, 
-  Building2, 
   ClipboardList, 
   Users, 
   ShieldAlert, 
-  Wallet, 
   PlusCircle,
   LayoutDashboard,
   LogOut,
@@ -22,9 +19,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get("tab"); // অ্যাক্টিভ ট্যাব রিড করার জন্য
   const { user, logout, loading } = useAuth();
 
-  // লোডিং স্টেট হ্যান্ডলিং
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100">
@@ -33,33 +31,31 @@ export default function DashboardLayout({
     );
   }
 
-  // ইউজার লগইন না থাকলে মেসেজ (বা মিডেলওয়্যার দিয়ে রিডিরেক্ট হবে)
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100">
         <div className="text-center">
           <p className="text-error font-semibold">Access Denied. Please Login First.</p>
-          <Link href="/login" className="btn btn-primary btn-sm mt-4">Go to Login</Link>
+          <Link href="/auth/login" className="btn btn-primary btn-sm mt-4">Go to Login</Link>
         </div>
       </div>
     );
   }
 
-  // রোল অনুযায়ী ডাইনামিক সাইডবার মেনু কনফিগারেশন
-  const menuConfigs: Record<string, { label: string; path: string; icon: any }[]> = {
+  const menuConfigs: Record<string, { label: string; path: string; tabName: string | null; icon: any }[]> = {
     tenant: [
-      { label: "Overview", path: "/dashboard/tenant", icon: LayoutDashboard },
-      { label: "My Rentals", path: "/dashboard/tenant#requests", icon: ClipboardList }, // রিকোয়ারমেন্ট অনুযায়ী রেন্টাল হিস্ট্রি
+      { label: "Overview", path: "/dashboard", tabName: null, icon: LayoutDashboard },
+      { label: "My Rentals", path: "/dashboard?tab=requests", tabName: "requests", icon: ClipboardList },
     ],
     landlord: [
-      { label: "Overview", path: "/dashboard/landlord", icon: LayoutDashboard },
-      { label: "Add Property", path: "/dashboard/landlord/properties/new", icon: PlusCircle },
-      { label: "Manage Requests", path: "/dashboard/landlord/requests", icon: ClipboardList },
+      { label: "Overview", path: "/dashboard", tabName: null, icon: LayoutDashboard },
+      { label: "Add Property", path: "/dashboard/properties/new", tabName: "new_prop", icon: PlusCircle }, 
+      { label: "Manage Requests", path: "/dashboard?tab=requests", tabName: "requests", icon: ClipboardList },
     ],
     admin: [
-      { label: "Overview", path: "/dashboard/admin", icon: LayoutDashboard },
-      { label: "User Management", path: "/dashboard/admin#users", icon: Users },
-      { label: "Content Moderation", path: "/dashboard/admin#moderation", icon: ShieldAlert },
+      { label: "Overview", path: "/dashboard", tabName: null, icon: LayoutDashboard },
+      { label: "User Management", path: "/dashboard?tab=users", tabName: "users", icon: Users },
+      { label: "Content Moderation", path: "/dashboard?tab=moderation", tabName: "moderation", icon: ShieldAlert },
     ],
   };
 
@@ -71,7 +67,6 @@ export default function DashboardLayout({
       
       {/* Main Content Area */}
       <div className="drawer-content flex flex-col p-6 lg:p-10">
-        {/* Mobile Navbar Toggle */}
         <div className="flex items-center justify-between lg:hidden bg-base-100 p-4 rounded-xl shadow-sm mb-6">
           <label htmlFor="dashboard-drawer" className="btn btn-ghost drawer-button">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -81,13 +76,13 @@ export default function DashboardLayout({
           <span className="font-bold text-lg capitalize">{user.role} Dashboard</span>
         </div>
 
-        {/* Dynamic Nested Pages (Tenant/Landlord/Admin pages load here) */}
-        <div className="flex-grow bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300/50">
+        {/* Dynamic Pages load here */}
+        <div className="flex-grow bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300/50 text-base-content">
           {children}
         </div>
       </div>
 
-      {/* Sidebar Sidebar Container */}
+      {/* Sidebar Container */}
       <div className="drawer-side z-40">
         <label htmlFor="dashboard-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
         
@@ -95,7 +90,7 @@ export default function DashboardLayout({
           <div>
             {/* Top Brand Info */}
             <div className="mb-8 px-2 flex flex-col gap-1">
-              <Link href="/" className="text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
+              <Link href="/" className="text-2xl font-bold tracking-tight text-primary">
                 RentNest
               </Link>
               <span className="text-xs uppercase tracking-wider font-semibold bg-primary/10 text-primary px-2.5 py-1 rounded-md w-max mt-2">
@@ -104,21 +99,24 @@ export default function DashboardLayout({
             </div>
 
             {/* Sidebar Navigation Links */}
-            <ul className="space-y-1.5">
+            <ul className="space-y-1.5 p-0 m-0 list-none">
               <span className="text-xs font-bold text-base-content/40 px-2 mb-2 block uppercase tracking-wider">Navigation</span>
               {currentMenu.map((item, index) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.path;
+                
+                // নেক্সট-জেএস ফ্রেন্ডলি নিখুঁত অ্যাক্টিভ চেক
+                const isActive = currentTab === item.tabName;
+
                 return (
-                  <li key={index}>
+                  <li key={index} className="block">
                     <Link 
                       href={item.path} 
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
-                        isActive ? "bg-primary text-primary-content active" : "hover:bg-base-200"
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium w-full ${
+                        isActive ? "bg-primary text-primary-content active" : "hover:bg-base-200 text-base-content"
                       }`}
                     >
-                      <Icon className="w-5 h-5" />
-                      {item.label}
+                      <Icon className="w-5 h-5 shared-icon-class" />
+                      <span>{item.label}</span>
                     </Link>
                   </li>
                 );
