@@ -7,8 +7,8 @@ export default function Logo() {
       <div className="p-2 bg-primary/10 rounded-lg text-primary">
         <Home className="h-6 w-6" />
       </div>
-      <span className="tracking-tight text-base-content">
-        Rent<span className="text-primary">Nest</span>
+      <span className="tracking-tight text-red-950">
+        Rent<span className="text-green-600 font-bold">Nest</span>
       </span>
     </Link>
   );

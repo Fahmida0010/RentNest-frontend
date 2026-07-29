@@ -2,24 +2,36 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, User, LogOut, LayoutDashboard, Compass } from "lucide-react";
-import Logo from "./Logo";
-// ইমপোর্ট পাথ তোমার প্রোজেক্টের useAuth হুকের লোকেশন অনুযায়ী চেঞ্জ করে নিবে
-// import { useAuth } from "@/hooks/useAuth";
+import { Menu, LogOut, LayoutDashboard, Home, Building2, Info, LogIn } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Navbar() {
   const pathname = usePathname();
-  
-  // ডামি অথ স্টেট (তোমার রিয়েল useAuth হুক দিয়ে এটা রিপ্লেস করবে)
-  const user = { name: "Fahmida Akter", role: "landlord" }; // roles: 'tenant' | 'landlord' | 'admin' | null
-  const logout = () => console.log("Logging out...");
+  const { user, logout } = useAuth();
 
-  
+  // ড্যাশবোর্ড পাথের হেল্পার ফাংশন (রোল অনুযায়ী রাউটিং)
+  const getDashboardPath = (role: string) => {
+    if (role === "admin") return "/dashboard/admin";
+    if (role === "landlord") return "/dashboard/landlord";
+    return "/dashboard/tenant";
+  };
+
+  // ডাইনামিক নেভিগেশন লিঙ্কস (মোবাইল ও ডেক্সটপ দুটোর জন্যই)
   const navLinks = (
     <>
       <li>
+        <Link href="/" className={pathname === "/" ? "active" : ""}>
+          <Home className="w-4 h-4" /> Home
+        </Link>
+      </li>
+      <li>
         <Link href="/properties" className={pathname === "/properties" ? "active" : ""}>
-          <Compass className="w-4 h-4" /> Browse Rentals
+          <Building2 className="w-4 h-4" /> Properties
+        </Link>
+      </li>
+      <li>
+        <Link href="/about" className={pathname === "/about" ? "active" : ""}>
+          <Info className="w-4 h-4" /> About
         </Link>
       </li>
     </>
@@ -27,9 +39,8 @@ export default function Navbar() {
 
   return (
     <div className="navbar bg-base-100 shadow-sm border-b border-base-200 sticky top-0 z-50 px-4 md:px-8">
-      {/* Navbar Start */}
-      <div className="navbar-start">
-        {/* Mobile Dropdown */}
+      {/* Navbar Start: Brand Logo & Mobile Menu Trigger */}
+      <div className="navbar-start flex items-center">
         <div className="dropdown">
           <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden p-1 mr-2">
             <Menu className="h-5 w-5" />
@@ -41,23 +52,34 @@ export default function Navbar() {
             {navLinks}
           </ul>
         </div>
-        <Logo />
+        
+        {/* বাকি লোগো ডিলিট করে শুধু RentNest টেক্সট লোগো রাখা হলো */}
+        <Link href="/" className="text-xl font-bold tracking-tight text-primary">
+          RentNest
+        </Link>
       </div>
 
-      {/* Navbar Center (Desktop Only) */}
+      {/* Navbar Center: Desktop Menu */}
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1 gap-2 font-medium">
           {navLinks}
         </ul>
       </div>
 
-      {/* Navbar End */}
+      {/* Navbar End: Auth Control */}
       <div className="navbar-end gap-2">
         {user ? (
+          /* লগইন করা থাকলে: প্রোফাইল ড্রপডাউন */
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar placeholder">
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar placeholder border border-primary/20">
               <div className="bg-neutral text-neutral-content w-10 rounded-full">
-                <span className="text-xs">{user.name.substring(0, 2).toUpperCase()}</span>
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.name} />
+                ) : (
+                  <span className="text-xs font-bold">
+                    {user.name.substring(0, 2).toUpperCase()}
+                  </span>
+                )}
               </div>
             </div>
             <ul
@@ -78,21 +100,17 @@ export default function Navbar() {
                 </Link>
               </li>
               <li>
-                <button onClick={logout} className="text-error">
+                <button onClick={logout} className="text-error font-medium">
                   <LogOut className="w-4 h-4" /> Logout
                 </button>
               </li>
             </ul>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="btn btn-ghost btn-sm hidden sm:inline-flex">
-              Sign In
-            </Link>
-            <Link href="/register" className="btn btn-primary btn-sm">
-              Register
-            </Link>
-          </div>
+          /* লগইন করা না থাকলে: ক্লিন স্ট্যান্ডার্ড বাটন */
+          <Link href="/login" className="btn btn-primary btn-sm px-4 text-white flex items-center gap-2 normal-case rounded-md">
+            <LogIn className="w-4 h-4" /> Login
+          </Link>
         )}
       </div>
     </div>
