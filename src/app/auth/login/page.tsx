@@ -23,27 +23,24 @@ export default function LoginPage() {
 
    try {
   setLoading(true);
-  const response = await axiosInstance.post("/auth/login", formData); // রেজিস্ট্রেশনের জন্য /auth/register
+  const response = await axiosInstance.post("/auth/login", { payload: formData }); 
 
   const apiResponse = response.data; 
 
-  // ব্যাকএন্ডের 'accessToken' কি (key) অনুযায়ী কন্ডিশন আপডেট করা হলো
   if (apiResponse?.success && apiResponse?.data?.accessToken) {
-    const token = apiResponse.data.accessToken; // 'token' এর বদলে 'accessToken'
+    const token = apiResponse.data.accessToken; 
     const user = apiResponse.data.user;
 
     // ১. কুকি সেট করা
     Cookies.set("token", token, { expires: 7 });
     if (user) {
-      // ইউজার অবজেক্ট সরাসরি কুকিতে রাখার সময় স্ট্রিংফাই করে নেওয়া হলো
       Cookies.set("user", JSON.stringify(user), { expires: 7 });
     }
 
-    // ২. রোল রিড করে ইনস্ট্যান্ট ড্যাশবোর্ডে রিডাইরেক্ট
     const userRole = user?.role || "tenant"; 
     
     router.push('/dashboard');
-    router.refresh(); // নেভবার ও লেআউটের স্টেট সিঙ্ক করার জন্য মাস্ট
+    router.refresh(); 
   } else {
     setError("Invalid response from server.");
   }

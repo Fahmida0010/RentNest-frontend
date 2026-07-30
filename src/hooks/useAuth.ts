@@ -8,7 +8,7 @@ interface AuthUser {
   id: string;
   name: string;
   email: string;
-  role: "tenant" | "landlord" | "admin";
+  role: "TENANT" | "LANDLORD" | "ADMIN";
   avatar?: string;
 }
 
@@ -17,7 +17,6 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // কুকি থেকে টোকেন চেক করা (অথবা localStorage.getItem("token") ও দিতে পারো)
     const token = Cookies.get("token");
 
     if (token) {
