@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  ClipboardList, 
-  Users, 
-  ShieldAlert, 
-  PlusCircle,
+import {
   LayoutDashboard,
+  Users,
+  Home,
+  ClipboardList,
+  PlusCircle,
+  CreditCard,
   LogOut,
-  Home
+  Menu,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -19,107 +21,198 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const currentTab = searchParams.get("tab"); 
   const { user, logout, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-100">
+      <div className="min-h-screen flex justify-center items-center">
         <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-base-100">
-        <div className="text-center">
-          <p className="text-error font-semibold">Access Denied. Please Login First.</p>
-          <Link href="/auth/login" className="btn btn-primary btn-sm mt-4">Go to Login</Link>
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
-  const menuConfigs: Record<string, { label: string; path: string; tabName: string | null; icon: any }[]> = {
+  const menu = {
     TENANT: [
-      { label: "Overview", path: "/dashboard", tabName: null, icon: LayoutDashboard },
-      { label: "My Rentals", path: "/dashboard/requests", tabName: "requests", icon: ClipboardList },
-       { label: "Payment History", path: "/dashboard/payment-history", tabName: "payment-history", icon: ClipboardList },
+      {
+        label: "Overview",
+        path: "/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "My Rentals",
+        path: "/dashboard/requests",
+        icon: ClipboardList,
+      },
+      {
+        label: "Payment History",
+        path: "/dashboard/payment-history",
+        icon: CreditCard,
+      },
     ],
+
     LANDLORD: [
-      { label: "Overview", path: "/dashboard", tabName: null, icon: LayoutDashboard },
-      { label: "Add Property", path: "/dashboard/add-property", tabName: "new_prop", icon: PlusCircle }, 
-      { label: "Manage Requests", path: "/dashboard/requests", tabName: "requests", icon: ClipboardList },
+      {
+        label: "Overview",
+        path: "/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "Add Property",
+        path: "/dashboard/add-property",
+        icon: PlusCircle,
+      },
+      {
+        label: "Manage Requests",
+        path: "/dashboard/requests",
+        icon: ClipboardList,
+      },
     ],
+
     ADMIN: [
-      { label: "Overview", path: "/dashboard", tabName: null, icon: LayoutDashboard },
-      { label: "User Management", path: "/dashboard/manage-users", tabName: "manage-users", icon: Users },
-        { label: "All Properties", path: "/dashboard/all-properties", tabName: "all-properties", icon: ShieldAlert },
-          { label: "All Rentals", path: "/dashboard/all-rentals", tabName: "all-rentals", icon: ShieldAlert },
-    
+      {
+        label: "Overview",
+        path: "/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "Manage Users",
+        path: "/dashboard/manage-users",
+        icon: Users,
+      },
+      {
+        label: "All Properties",
+        path: "/dashboard/all-properties",
+        icon: Home,
+      },
+      {
+        label: "All Rentals",
+        path: "/dashboard/all-rentals",
+        icon: ClipboardList,
+      },
     ],
   };
 
-  const currentMenu = menuConfigs[user.role] || [];
+  const menus = menu[user.role] || [];
 
   return (
-    <div className="drawer lg:drawer-open min-h-screen bg-base-200">
-   
-    
-     {/* Sidebar Container */}
-      <div className="drawer-side z-40">
-        <label htmlFor="dashboard-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
-        
-        <div className="menu p-6 w-80 min-h-full bg-base-100 text-base-content flex flex-col justify-between border-r border-base-200">
-          <div>
-            {/* Top Brand Info */}
-            <div className="mb-8 px-2 flex flex-col gap-1">
-             
-              <span className="text-xs uppercase tracking-wider font-semibold bg-primary/10 text-primary px-2.5 py-1 rounded-md w-max mt-2">
-                {user.role} Portal
+    <div className="drawer lg:drawer-open bg-base-100">
+
+      <input
+        id="dashboard-drawer"
+        type="checkbox"
+        className="drawer-toggle"
+      />
+
+      {/* Page Content */}
+      <div className="drawer-content flex flex-col min-h-screen">
+
+        {/* Mobile Navbar */}
+        <div className="navbar bg-base-100 border-b lg:hidden sticky top-0 z-50">
+
+          <label
+            htmlFor="dashboard-drawer"
+            className="btn btn-square btn-ghost"
+          >
+            <Menu className="w-6 h-6" />
+          </label>
+
+          <div className="font-bold text-lg ml-2">
+            Dashboard
+          </div>
+
+        </div>
+
+        <main className="flex-1 p-6 overflow-x-hidden">
+          {children}
+        </main>
+      </div>
+
+      {/* Sidebar */}
+      <div className="drawer-side">
+
+        <label
+          htmlFor="dashboard-drawer"
+          className="drawer-overlay"
+        ></label>
+
+        <aside className="w-72 min-h-full bg-base-100 border-r flex flex-col">
+
+          {/* Header */}
+
+          <div className="p-6 border-b">
+
+            <h2 className="text-2xl font-bold">
+              Dashboard
+            </h2>
+
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+
+              <ShieldCheck className="w-4 h-4 text-primary" />
+
+              <span className="text-sm font-semibold text-primary">
+                {user.role}
               </span>
+
             </div>
 
-            {/* Sidebar Navigation Links */}
-            <ul className="space-y-1.5 p-0 m-0 list-none">
-              {currentMenu.map((item, index) => {
+          </div>
+
+          {/* Menu */}
+
+          <div className="flex-1 p-4">
+
+            <ul className="space-y-2">
+
+              {menus.map((item) => {
+
                 const Icon = item.icon;
-                
-                // নেক্সট-জেএস ফ্রেন্ডলি নিখুঁত অ্যাক্টিভ চেক
-                const isActive = currentTab === item.tabName;
+
+                const active = pathname === item.path;
 
                 return (
-                  <li key={index} className="block">
-                    <Link 
-                      href={item.path} 
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium w-full ${
-                        isActive ? "bg-primary text-primary-content active" : "hover:bg-base-200 text-base-content"
+                  <li key={item.path}>
+                    <Link
+                      href={item.path}
+                      className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-all ${
+                        active
+                          ? "bg-primary text-white"
+                          : "hover:bg-base-200"
                       }`}
                     >
-                      <Icon className="w-5 h-5 shared-icon-class" />
+                      <Icon className="w-5 h-5" />
+
                       <span>{item.label}</span>
+
                     </Link>
                   </li>
                 );
               })}
             </ul>
+
           </div>
 
-          {/* Bottom Action Menu */}
-          <div className="pt-4 border-t border-base-200 space-y-2">
-            
-            <button 
-              onClick={logout} 
-              className="btn btn-ghost btn-block justify-start gap-3 text-error hover:bg-error/10 rounded-xl font-medium"
+          {/* Footer */}
+
+          <div className="border-t p-4">
+
+            <button
+              onClick={logout}
+              className="btn btn-error btn-outline w-full justify-start gap-3"
             >
               <LogOut className="w-5 h-5" />
+
               Sign Out
+
             </button>
+
           </div>
-        </div>
+
+        </aside>
+
       </div>
+
     </div>
   );
 }

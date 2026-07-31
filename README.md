@@ -8,7 +8,7 @@ A modern **full-stack rental property marketplace** where tenants can discover r
 
 ## 🌐 Live Demo
 
-🔗 **Frontend:** 
+🔗 **Frontend:** https://rent-nest-frontend-three.vercel.app
 
 🔗 **Backend API:** https://rentnestb.vercel.app
 

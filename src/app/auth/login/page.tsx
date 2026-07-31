@@ -24,6 +24,7 @@ export default function LoginPage() {
    try {
   setLoading(true);
   const response = await axiosInstance.post("/auth/login",formData); 
+  console.log(response.data);
 
   const apiResponse = response.data; 
 
@@ -33,12 +34,16 @@ export default function LoginPage() {
 
     // ১. কুকি সেট করা
     Cookies.set("token", token, { expires: 7 });
+    console.log("Saved Token:", Cookies.get("token"));
+
     if (user) {
       Cookies.set("user", JSON.stringify(user), { expires: 7 });
     }
 
     const userRole = user?.role || "tenant"; 
     
+    console.log("All Cookies:", document.cookie);
+
     router.push('/dashboard');
     router.refresh(); 
   } else {
