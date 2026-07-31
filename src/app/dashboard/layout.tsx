@@ -55,8 +55,10 @@ export default function DashboardLayout({
     ],
     ADMIN: [
       { label: "Overview", path: "/dashboard", tabName: null, icon: LayoutDashboard },
-      { label: "User Management", path: "/dashboard/users", tabName: "users", icon: Users },
-      { label: "Content Moderation", path: "/dashboard/moderation", tabName: "moderation", icon: ShieldAlert },
+      { label: "User Management", path: "/dashboard/manage-users", tabName: "manage-users", icon: Users },
+        { label: "All Properties", path: "/dashboard/all-properties", tabName: "all-properties", icon: ShieldAlert },
+          { label: "All Rentals", path: "/dashboard/all-rentals", tabName: "all-rentals", icon: ShieldAlert },
+    
     ],
   };
 

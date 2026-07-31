@@ -23,7 +23,7 @@ export default function LoginPage() {
 
    try {
   setLoading(true);
-  const response = await axiosInstance.post("/auth/login", { payload: formData }); 
+  const response = await axiosInstance.post("/auth/login",formData); 
 
   const apiResponse = response.data; 
 
