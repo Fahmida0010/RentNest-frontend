@@ -42,7 +42,8 @@ export default function DashboardLayout({
     LANDLORD: [
       { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
       { label: "Add Property", path: "/dashboard/add-property", icon: PlusCircle },
-      { label: "Manage Requests", path: "/dashboard/requests", icon: ClipboardList },
+         { label: "My Properties", path: "/dashboard/my-properties", icon: PlusCircle },
+      { label: "Manage Requests", path: "/dashboard/manage-requests", icon: ClipboardList },
     ],
     ADMIN: [
       { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
