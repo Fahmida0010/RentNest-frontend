@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import Link from 'next/link';
-// আপনার প্রজেক্টের পাথ অনুযায়ী axiosInstance ইম্পোর্ট করুন
-import axiosInstance from '@/lib/axios'; 
+import axiosInstance from '@/lib/axios';
+import { Pencil, Trash2, Loader2, Plus } from 'lucide-react';
 
 interface Property {
   id: string;
@@ -102,20 +102,27 @@ const MyProperties: React.FC = () => {
     });
   };
 
-  // ৫. মোডাল সাবমিট করে DB-তে সেভ করার হ্যান্ডলার
+  // ৫. মোডাল সাবমিট করে DB-তে সেভ করার হ্যান্ডলার (Fixed Zod validation & Dynamic ID)
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProperty) return;
 
     try {
       setSubmitLoading(true);
-      // আপনার ব্যাকএন্ডের আপডেট রাউট অনুযায়ী URL পরিবর্তন করতে পারেন (যেমন: `/properties/${editingProperty.id}`)
-      const response = await axiosInstance.put(`/landlord/properties/${editingProperty.id}`, {
+      
+      // আপনার Zod স্কিমা অনুযায়ী রিকোয়েস্ট বডি সাজানো হলো (categoryName বাধ্যতামূলক)
+      const updateData = {
         title: editingProperty.title,
         location: editingProperty.location,
-        price: editingProperty.price,
-        status: editingProperty.status
-      });
+        price: Number(editingProperty.price), 
+        categoryName: editingProperty.category?.name || "Uncategorized" // Zod Schema Validation Error Fix
+      };
+
+      // এখানে dynamic ID পাঠানো নিশ্চিত করা হয়েছে
+      const response = await axiosInstance.put(
+        `/landlord/properties/${editingProperty.id}`, 
+        updateData
+      );
 
       if (response.data && response.data.success) {
         Swal.fire({
@@ -125,7 +132,7 @@ const MyProperties: React.FC = () => {
           confirmButtonColor: '#2563EB'
         });
 
-        // লোকাল স্টেট আপডেট করা যাতে পেজ রিফ্রেশ ছাড়া ডাটা চেঞ্জ দেখা যায়
+        // রিয়েল-টাইম লোকাল স্টেট আপডেট করা হলো
         setProperties((prev) =>
           prev.map((item) => (item.id === editingProperty.id ? { ...item, ...editingProperty } : item))
         );
@@ -133,9 +140,12 @@ const MyProperties: React.FC = () => {
         setEditingProperty(null);
       }
     } catch (error: any) {
+      console.error("Backend validation error response:", error.response?.data);
+      const errorMessage = error.response?.data?.message || 'Failed to update property.';
+      
       Swal.fire({
-        title: 'Error!',
-        text: error.response?.data?.message || 'Failed to update property.',
+        title: 'Validation Error!',
+        text: typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage,
         icon: 'error',
         confirmButtonColor: '#EF4444'
       });
@@ -146,15 +156,15 @@ const MyProperties: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600"></div>
-        <p className="ml-3 text-gray-600 font-medium">Loading your listings...</p>
+      <div className="flex flex-col justify-center items-center h-64 gap-3">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+        <p className="text-gray-600 font-medium">Loading your listings...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6 bg-white shadow-md rounded-lg mt-6 md:mt-10">
+    <div className="max-w-6xl mx-auto p-4 md:p-6 bg-white shadow-md rounded-xl mt-6 md:mt-10 border border-gray-100">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
@@ -163,9 +173,9 @@ const MyProperties: React.FC = () => {
         </div>
         <Link 
           href="/dashboard/add-property" 
-          className="w-full sm:w-auto text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm transition shadow"
+          className="w-full sm:w-auto inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition shadow-sm gap-2"
         >
-          + Add New Property
+          <Plus size={16} /> Add New Property
         </Link>
       </div>
 
@@ -178,10 +188,10 @@ const MyProperties: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* 📱 Mobile View: Card Layout (Visible only on Mobile/Tablet screens) */}
+          {/* 📱 Mobile View: Card Layout */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {properties.map((property) => (
-              <div key={property.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div key={property.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:border-gray-300 transition">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-base font-semibold text-gray-900">{property.title}</h3>
                   <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
@@ -190,44 +200,46 @@ const MyProperties: React.FC = () => {
                     {property.status}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-1"><span className="font-medium">Category:</span> {property.category?.name || 'N/A'}</p>
-                <p className="text-sm text-gray-500 mb-2"><span className="font-medium">Location:</span> {property.location}</p>
+                <p className="text-sm text-gray-600 mb-1"><span className="font-medium text-gray-400">Category:</span> {property.category?.name || 'N/A'}</p>
+                <p className="text-sm text-gray-500 mb-2"><span className="font-medium text-gray-400">Location:</span> {property.location}</p>
                 <p className="text-base font-bold text-gray-900 mb-4">${property.price.toLocaleString()}</p>
                 
-                <div className="flex gap-2">
+                <div className="flex gap-2 border-t border-gray-100 pt-3">
                   <button
                     onClick={() => openUpdateModal(property)}
-                    className="flex-1 text-center text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 py-2 rounded font-medium transition"
+                    className="flex-1 inline-flex items-center justify-center text-sm text-emerald-600 bg-emerald-50 hover:bg-emerald-100 py-2 rounded-lg font-medium transition gap-1.5"
+                    title="Update"
                   >
-                    Update
+                    <Pencil size={15} /> Update
                   </button>
                   <button
                     onClick={() => handleDelete(property.id)}
-                    className="flex-1 text-center text-sm text-red-600 bg-red-50 hover:bg-red-100 py-2 rounded font-medium transition"
+                    className="flex-1 inline-flex items-center justify-center text-sm text-red-600 bg-red-50 hover:bg-red-100 py-2 rounded-lg font-medium transition gap-1.5"
+                    title="Delete"
                   >
-                    Delete
+                    <Trash2 size={15} /> Delete
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* 💻 Desktop View: Table Layout (Hidden on Mobile, Visible from Medium screens) */}
-          <div className="hidden md:block overflow-x-auto border border-gray-200 rounded-lg">
+          {/* 💻 Desktop/Tablet View: Responsive Table Layout */}
+          <div className="hidden md:block overflow-x-auto border border-gray-100 rounded-xl shadow-inner bg-gray-50/30">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Title</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Location</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {properties.map((property) => (
-                  <tr key={property.id} className="hover:bg-gray-50 transition">
+                  <tr key={property.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-semibold text-gray-900">{property.title}</div>
                     </td>
@@ -247,19 +259,23 @@ const MyProperties: React.FC = () => {
                         {property.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-3">
-                      <button
-                        onClick={() => openUpdateModal(property)}
-                        className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition"
-                      >
-                        Update
-                      </button>
-                      <button
-                        onClick={() => handleDelete(property.id)}
-                        className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition"
-                      >
-                        Delete
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                      <div className="flex justify-center items-center space-x-2">
+                        <button
+                          onClick={() => openUpdateModal(property)}
+                          className="p-2 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-600 rounded-lg transition-all shadow-sm"
+                          title="Update Property"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(property.id)}
+                          className="p-2 text-red-600 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg transition-all shadow-sm"
+                          title="Delete Property"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -271,14 +287,14 @@ const MyProperties: React.FC = () => {
 
       {/* 📋 Update Property Modal Section */}
       {isModalOpen && editingProperty && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 overflow-y-auto backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-40 overflow-y-auto backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all border border-gray-100">
             {/* Modal Header */}
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-bold text-gray-800">Update Property</h3>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold transition focus:outline-none"
+                className="text-gray-400 hover:text-gray-600 text-2xl font-semibold transition focus:outline-none"
               >
                 &times;
               </button>
@@ -294,7 +310,7 @@ const MyProperties: React.FC = () => {
                   required
                   value={editingProperty.title}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
               </div>
 
@@ -306,7 +322,7 @@ const MyProperties: React.FC = () => {
                   required
                   value={editingProperty.location}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
               </div>
 
@@ -316,10 +332,10 @@ const MyProperties: React.FC = () => {
                   type="number"
                   name="price"
                   required
-                  min="0"
+                  min="1"
                   value={editingProperty.price}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
               </div>
 
@@ -329,7 +345,7 @@ const MyProperties: React.FC = () => {
                   name="status"
                   value={editingProperty.status}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition"
                 >
                   <option value="AVAILABLE">AVAILABLE</option>
                   <option value="RENTED">RENTED</option>
@@ -341,18 +357,18 @@ const MyProperties: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitLoading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-md transition flex items-center shadow"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg transition flex items-center shadow-sm"
                 >
                   {submitLoading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
                       Saving...
                     </>
                   ) : (
