@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   MapPin, 
@@ -11,9 +12,10 @@ import {
   Calendar, 
   CheckCircle2, 
   ArrowLeft, 
-  CreditCard 
+  Send 
 } from "lucide-react";
 import axiosInstance from "@/lib/axios";
+import Swal from "sweetalert2"; // SweetAlert2 ইমপোর্ট করা হয়েছে
 
 interface Property {
   id: string;
@@ -39,7 +41,8 @@ export default function PropertyDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string>("");
   const [moveInDate, setMoveInDate] = useState<string>("");
-  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState(false);
 
   useEffect(() => {
     const fetchPropertyDetails = async () => {
@@ -50,6 +53,12 @@ export default function PropertyDetailsPage() {
         if (propertyData?.images?.length > 0) setActiveImage(propertyData.images[0]);
       } catch (err) {
         console.error("Error fetching property detail", err);
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Failed to load property details!",
+          confirmButtonColor: "#10b981",
+        });
       } finally {
         setLoading(false);
       }
@@ -57,92 +66,145 @@ export default function PropertyDetailsPage() {
     if (id) fetchPropertyDetails();
   }, [id]);
 
-  // SSLCommerz গেটওয়ে রিডাইরেক্ট এবং বুকিং প্রসেস
-  const handlePaymentAndBooking = async (e: React.FormEvent) => {
+  const handleRentalRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
       router.push("/auth/login");
       return;
     }
     if (user.role !== "TENANT") {
-      alert("Only Tenants can rent properties.");
+      Swal.fire({
+        icon: "warning",
+        title: "Access Denied",
+        text: "Only Tenants can send rental requests.",
+        confirmButtonColor: "#10b981",
+      });
       return;
     }
 
-    setPaymentLoading(true);
+    setRequestLoading(true);
 
     try {
-      // Step ১: রেন্টাল রিকোয়েস্ট সাবমিট
-      const rentalResponse = await axiosInstance.post("/rentals", {
+      await axiosInstance.post("/rentals", {
         propertyId: id,
         moveInDate: new Date(moveInDate).toISOString(),
       });
 
-      const rentalRequestId = rentalResponse.data?.data?.id; 
-      if (!rentalRequestId) throw new Error("Could not retrieve rental request ID.");
-
-      // Step ২: পেমেন্ট সেশন ক্রিয়েট করা (SSLCommerz)
-      const paymentResponse = await axiosInstance.post("/payments/create", { 
-        rentalRequestId 
+      setRequestSuccess(true);
+      (document.getElementById('booking_modal') as HTMLDialogElement).close();
+      
+      // সুন্দর সাকসেস অ্যালার্ট
+      Swal.fire({
+        icon: "success",
+        title: "Request Sent!",
+        text: "Your rental request has been submitted to the landlord successfully.",
+        showConfirmButton: false,
+        timer: 2500,
       });
 
-      const gatewayUrl = paymentResponse.data?.data?.GatewayPageURL;
-
-      if (gatewayUrl) {
-        // সরাসরি SSLCommerz পেমেন্ট পেজে রিডাইরেক্ট
-        window.location.href = gatewayUrl;
-      } else {
-        throw new Error(paymentResponse.data?.message || "Failed to generate gateway payment link.");
-      }
+      setTimeout(() => {
+        router.push("/dashboard/my-rentals");
+      }, 2500);
 
     } catch (error: any) {
-      const errorMsg = error.response?.data?.message || error.message || "Something went wrong during checkout.";
-      alert(errorMsg);
+      const errorMsg = error.response?.data?.message || error.message || "Failed to send rental request.";
+      Swal.fire({
+        icon: "error",
+        title: "Request Failed",
+        text: errorMsg,
+        confirmButtonColor: "#ef4444",
+      });
     } finally {
-      setPaymentLoading(false);
+      setRequestLoading(false);
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
-  if (!property) return <div className="min-h-screen flex items-center justify-center text-error font-bold">Property Not Found</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-base-100"><span className="loading loading-spinner loading-lg text-emerald-600"></span></div>;
+  if (!property) return <div className="min-h-screen flex items-center justify-center text-error font-bold bg-base-100">Property Not Found</div>;
 
   return (
-    <div className="min-h-screen bg-base-200 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-base-300 py-6 sm:py-10 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
-        <button onClick={() => router.back()} className="btn btn-ghost gap-2 mb-6 pl-0 text-base-content/70 hover:text-base-content"><ArrowLeft className="w-5 h-5" /> Back</button>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Content Body */}
+        <button onClick={() => router.back()} className="btn btn-ghost gap-2 mb-6 pl-0 text-base-content/70 hover:text-emerald-600 transition-colors">
+          <ArrowLeft className="w-5 h-5" /> Back to listings
+        </button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          
+          {/* Left Column: Media Gallery & Content */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-base-100 p-4 rounded-2xl shadow-sm border border-base-300">
-              <div className="aspect-[16/9] w-full relative rounded-xl overflow-hidden bg-base-200">
-                <img src={activeImage || "/placeholder.jpg"} alt={property.title} className="object-cover w-full h-full" />
-                <span className={`absolute top-4 right-4 badge badge-lg border-none font-bold py-4 px-6 shadow-md ${property.status === "AVAILABLE" ? "bg-success text-success-content" : "bg-error text-error-content"}`}>{property.status}</span>
-              </div>
+            <div className="relative rounded-3xl overflow-hidden bg-base-200 aspect-[16/10] sm:aspect-[16/9] w-full shadow-md group border border-base-200">
+              <Image 
+                src={activeImage || "/placeholder.jpg"} 
+                alt={property.title} 
+                fill
+                priority
+                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              
+              <span className={`absolute top-4 right-4 text-xs font-extrabold tracking-wider uppercase px-4 py-2 rounded-xl backdrop-blur-md shadow-lg border ${
+                property.status === "AVAILABLE" 
+                  ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/40" 
+                  : "bg-rose-500/20 text-rose-500 border-rose-500/40"
+              }`}>
+                ● {property.status}
+              </span>
+
+              <span className="absolute bottom-4 left-4 bg-black/60 text-white backdrop-blur-md text-xs font-semibold px-3 py-1.5 rounded-xl border border-white/10 uppercase tracking-wide">
+                {property.category?.name}
+              </span>
             </div>
 
-            <div className="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 space-y-4">
-              <span className="badge badge-primary font-semibold">{property.category?.name}</span>
-              <h1 className="text-2xl sm:text-3xl font-black text-base-content tracking-tight">{property.title}</h1>
-              <div className="flex items-center gap-1.5 text-base-content/60 text-sm"><MapPin className="w-4 h-4 text-primary" /><span>{property.location}</span></div>
+            {/* Thumbnail Gallery */}
+            {property.images?.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x">
+                {property.images.map((img, idx) => (
+                  <button 
+                    key={idx} 
+                    onClick={() => setActiveImage(img)}
+                    className={`relative w-24 h-16 rounded-xl overflow-hidden shrink-0 border-2 transition-all snap-start ${
+                      activeImage === img ? "border-emerald-500 scale-95 shadow-md" : "border-transparent opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <Image src={img} alt={`Thumb ${idx}`} fill className="object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Core Info Details */}
+            <div className="bg-base-100 p-6 sm:p-8 rounded-3xl shadow-sm border border-base-200 space-y-6">
+              <div className="space-y-3">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-base-content tracking-tight leading-tight">{property.title}</h1>
+                <div className="flex items-center gap-1.5 text-base-content/60 text-sm sm:text-base">
+                  <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{property.location}</span>
+                </div>
+              </div>
               
-              <div className="flex gap-4 border-t border-b border-base-200 py-4">
-                <div className="flex items-center gap-2 font-medium text-base-content/80"><BedDouble className="w-5 h-5 text-primary" /><span>{property.bedrooms} Bedrooms</span></div>
-                <div className="flex items-center gap-2 font-medium text-base-content/80"><Bath className="w-5 h-5 text-primary" /><span>{property.bathrooms} Bathrooms</span></div>
+              <div className="flex gap-6 border-y border-base-200 py-4">
+                <div className="flex items-center gap-2 text-sm sm:text-base font-semibold text-base-content/80">
+                  <BedDouble className="w-5 h-5 text-emerald-600" />
+                  <span>{property.bedrooms} Bedrooms</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm sm:text-base font-semibold text-base-content/80">
+                  <Bath className="w-5 h-5 text-emerald-600" />
+                  <span>{property.bathrooms} Bathrooms</span>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg font-bold">Description</h3>
-                <p className="text-base-content/70 text-justify leading-relaxed">{property.description}</p>
+                <h3 className="text-lg font-bold text-base-content tracking-tight">About this space</h3>
+                <p className="text-base-content/70 text-sm sm:text-base text-justify leading-relaxed whitespace-pre-line">{property.description}</p>
               </div>
 
               <div className="space-y-3 pt-2">
-                <h3 className="text-lg font-bold">Amenities Included</h3>
+                <h3 className="text-lg font-bold text-base-content tracking-tight">Amenities Included</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {property.amenities?.map((amenity, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-base-200 p-3 rounded-xl border border-base-300/30">
-                      <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
-                      <span className="text-sm font-semibold text-base-content/80 capitalize">{amenity}</span>
+                    <div key={index} className="flex items-center gap-2.5 bg-base-200/40 p-3.5 rounded-xl border border-base-200 hover:bg-base-200/80 transition-all duration-200">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="text-xs sm:text-sm font-medium text-base-content/80 capitalize">{amenity}</span>
                     </div>
                   ))}
                 </div>
@@ -150,12 +212,15 @@ export default function PropertyDetailsPage() {
             </div>
           </div>
 
-          {/* Action Card */}
-          <div className="space-y-6">
-            <div className="bg-base-100 p-6 rounded-2xl shadow-lg border border-base-300 sticky top-6 space-y-6">
+          {/* Right Column: Sticky Request Summary Panel */}
+          <div className="space-y-6 lg:sticky lg:top-6">
+            <div className="bg-base-100 p-6 rounded-3xl shadow-md border border-base-200 space-y-6">
               <div>
-                <p className="text-xs font-bold text-base-content/40 uppercase tracking-wider">Rent / Month</p>
-                <p className="text-3xl font-black text-primary">৳{property.price.toLocaleString()}</p>
+                <p className="text-xs font-bold text-base-content/40 uppercase tracking-wider mb-1">Rent / Month</p>
+                <p className="text-3xl sm:text-4xl font-black text-emerald-600">
+                  ৳{property.price.toLocaleString()}
+                  <span className="text-xs font-semibold text-base-content/50 lowercase ml-1">/mo</span>
+                </p>
               </div>
 
               {property.status === "AVAILABLE" ? (
@@ -164,50 +229,84 @@ export default function PropertyDetailsPage() {
                     if(!user) router.push('/auth/login');
                     else (document.getElementById('booking_modal') as HTMLDialogElement)?.showModal();
                   }}
-                  className="btn btn-primary btn-block btn-lg font-bold shadow-md rounded-xl gap-2"
+                  disabled={requestSuccess}
+                  className="btn bg-emerald-600
+                   hover:bg-emerald-700 text-white
+                    btn-block btn-lg font-bold shadow-md
+                     hover:shadow-lg rounded-xl flex items-center justify-center
+                      gap-1 text-sm sm:text-base normal-case border-none transition-all duration-200 transform active:scale-98"
                 >
-                  <CreditCard className="w-5 h-5" /> Book Now (Pay with SSL)
+                  <Send className="w-4 h-4 " /> 
+                  Request for Rental
                 </button>
               ) : (
-                <button className="btn btn-disabled btn-block btn-lg rounded-xl font-bold" disabled>Already Booked</button>
+                <button className="btn btn-neutral btn-block btn-lg rounded-xl font-bold cursor-not-allowed opacity-50" disabled>Already Rented Out</button>
               )}
 
-              <div className="border-t border-base-200 pt-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="avatar placeholder"><div className="bg-neutral text-neutral-content rounded-full w-10"><User className="w-5 h-5" /></div></div>
+              <div className="border-t border-base-200 pt-4">
+                <div className="flex items-center gap-3 bg-base-200/40 p-3 rounded-xl border border-base-200">
+                  <div className="avatar placeholder">
+                    <div className="bg-emerald-100 text-emerald-700 rounded-xl w-10 h-10">
+                      <User className="w-5 h-5" />
+                    </div>
+                  </div>
                   <div>
-                    <p className="text-[10px] font-bold text-base-content/40 uppercase">Listed By</p>
+                    <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-wider">Property Owner</p>
                     <h4 className="font-bold text-sm text-base-content capitalize">{property.landlord?.name}</h4>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
-      {/* --- SSLCOMMERZ PRE-CHECKOUT DIALOG --- */}
-      <dialog id="booking_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box bg-base-100 rounded-2xl border border-base-300">
-          <h3 className="font-black text-xl flex items-center gap-2 text-base-content mb-2"><Calendar className="w-5 h-5 text-primary" /> Confirm Booking</h3>
-          <p className="text-xs text-base-content/60 mb-4">Select your targeted move-in date. Clicking confirm will safely redirect you to SSLCommerz payment portal.</p>
+      {/* --- RENTAL REQUEST PRE-SUBMIT DIALOG (FIXED & CENTERED) --- */}
+      <dialog id="booking_modal" className="modal modal-middle backdrop-blur-sm transition-all duration-300">
+        <div className="modal-box bg-base-100 rounded-3xl border border-base-200 shadow-2xl max-w-md p-6 sm:p-8 relative">
+          <button 
+            type="button" 
+            onClick={() => (document.getElementById('booking_modal') as HTMLDialogElement).close()} 
+            className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-base-content/50 hover:text-base-content"
+          >
+            ✕
+          </button>
           
-          <form onSubmit={handlePaymentAndBooking} className="space-y-4">
+          <h3 className="font-black text-xl sm:text-2xl flex items-center gap-2 text-base-content mb-2">
+            <Calendar className="w-5 h-5 text-emerald-600" /> Rental Application
+          </h3>
+          <p className="text-xs sm:text-sm text-base-content/60 mb-6">
+            Select your desired move-in date. Your profile details and application will be securely sent to the landlord for active review.
+          </p>
+          
+          <form onSubmit={handleRentalRequest} className="space-y-5">
             <div className="form-control w-full">
-              <label className="label font-bold text-xs uppercase text-base-content/60">Move-in Date</label>
+              <label className="label font-bold text-xs uppercase text-base-content/60 tracking-wider">Targeted Move-in Date</label>
               <input 
-                type="date" required
+                type="date" 
+                required
                 min={new Date().toISOString().split("T")[0]} 
                 value={moveInDate}
                 onChange={(e) => setMoveInDate(e.target.value)}
-                className="input input-bordered w-full rounded-xl focus:outline-primary bg-base-200 text-base-content font-medium" 
+                className="input input-bordered w-full rounded-xl focus:outline-emerald-500 bg-base-200/50 text-base-content font-medium text-sm sm:text-base p-3 h-auto" 
               />
             </div>
 
-            <div className="modal-action gap-2">
-              <button type="button" onClick={() => (document.getElementById('booking_modal') as HTMLDialogElement).close()} className="btn btn-ghost rounded-xl font-semibold">Cancel</button>
-              <button type="submit" disabled={paymentLoading} className="btn btn-primary px-6 rounded-xl font-bold gap-2">
-                {paymentLoading ? <span className="loading loading-spinner"></span> : <>Proceed to SSL Payment</>}
+            <div className="modal-action gap-3 pt-2">
+              <button 
+                type="button" 
+                onClick={() => (document.getElementById('booking_modal') as HTMLDialogElement).close()} 
+                className="btn btn-ghost rounded-xl font-semibold px-5"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={requestLoading} 
+                className="btn bg-emerald-600 hover:bg-emerald-700 text-white px-6 rounded-xl font-bold gap-2 normal-case shadow-md border-none"
+              >
+                {requestLoading ? <span className="loading loading-spinner loading-sm"></span> : <>Submit Request</>}
               </button>
             </div>
           </form>
