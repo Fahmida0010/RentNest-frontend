@@ -8,7 +8,7 @@ import AdminOverview from "@/components/dashboard/AdminOverview";
 export default function DashboardOverview() {
   const { user, loading } = useAuth();
 
-  // লোডিং স্টেটে স্পিনার দেখানো
+  
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -30,7 +30,7 @@ export default function DashboardOverview() {
     default:
       return (
         <div className="text-red-500 font-semibold">
-          ইউজারের কোনো বৈধ রোল পাওয়া যায়নি!
+        user role is not recognized. Please contact support.
         </div>
       );
   }
