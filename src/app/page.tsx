@@ -1,20 +1,11 @@
 import FeaturedProperties from "@/components/home/FeaturedProperties";
 import Hero from "@/components/home/Hero";
-import Image from "next/image";
 
 export default function Home() {
-
   return (
     <div>
-
-     <Hero/>
-      <FeaturedProperties/>
-
+      <Hero />
+      <FeaturedProperties />
     </div>
-     
-
   );
 }
-  
-
-  

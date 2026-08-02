@@ -11,24 +11,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-
-  // ইউআরএল যদি /dashboard দিয়ে শুরু হয়, তবে এটি true হবে
   const isDashboard = pathname ? pathname.startsWith("/dashboard") : false;
 
   return (
-    <html lang="en">
-      {/* <body className="min-h-screen flex flex-col"> */}
-
-      <body className={isDashboard ? "min-h-screen bg-base-100" : "min-h-screen flex flex-col"}>
-
-        
+    <html lang="en" data-theme="light">
+      <body className="min-h-screen bg-base-100 antialiased">
         {!isDashboard && <Navbar />}
 
-        <main className="flex-1">
-          {children}
-        </main>
+        {/* যদি ড্যাশবোর্ড হয় তবে সরাসরি চাইল্ড রেন্ডার হবে, কোনো ফ্লেক্স কনফ্লিক্ট ছাড়া */}
+        {isDashboard ? (
+          children
+        ) : (
+          <main className="flex-1">
+            {children}
+          </main>
+        )}
 
-        {/* ড্যাশবোর্ড না হলে মেইন Footer দেখাবে */}
         {!isDashboard && <Footer />}
       </body>
     </html>
