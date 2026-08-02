@@ -94,6 +94,52 @@ export default function MyRentals() {
     );
   };
 
+  // Action Buttons Builder (Reused for both table and card views)
+  const renderActionButtons = (rental: RentalRequest) => {
+    if (rental.status === "APPROVED") {
+      return (
+        <button
+          onClick={() => handlePayment(rental.id)}
+          disabled={actionLoading === rental.id}
+          className="btn btn-primary btn-sm sm:btn-md gap-1.5 rounded-xl text-green-600 shadow-sm normal-case font-bold px-4 hover:scale-[1.02] active:scale-95 transition-transform w-full sm:w-auto"
+        >
+          {actionLoading === rental.id ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <CreditCard className="w-3.5 h-3.5" />
+          )}
+          Pay Now
+        </button>
+      );
+    }
+
+    if (rental.status === "ACTIVE") {
+      return (
+        <button 
+          onClick={() => alert("Review feature coming soon!")}
+          className="btn btn-success btn-outline btn-sm sm:btn-md gap-1.5 rounded-xl normal-case font-bold px-4 w-full sm:w-auto"
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          Leave Review
+        </button>
+      );
+    }
+
+    if (rental.status === "PENDING") {
+      return <span className="text-xs font-semibold px-2 py-1 bg-base-200 text-base-content/50 rounded-md italic inline-block">Awaiting Host</span>;
+    }
+
+    if (rental.status === "REJECTED") {
+      return <span className="text-xs text-error/80 font-bold bg-error/10 px-2 py-1 rounded-md inline-block">Declined</span>;
+    }
+
+    if (rental.status === "COMPLETED") {
+      return <span className="text-xs text-base-content/40 font-bold bg-base-200 px-2 py-1 rounded-md inline-block">Closed</span>;
+    }
+
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex justify-center items-center">
@@ -103,7 +149,7 @@ export default function MyRentals() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 px-2 sm:px-4 py-4">
+    <div className="w-full max-w-7xl mx-auto space-y-6 px-4 py-4">
       {/* Header section */}
       <div className="flex flex-col gap-2 border-b border-base-200 pb-5">
         <h1 className="text-2xl sm:text-3xl font-black flex items-center gap-3 text-base-content tracking-tight">
@@ -116,7 +162,7 @@ export default function MyRentals() {
       </div>
 
       {rentals.length === 0 ? (
-        <div className="card bg-base-100 border border-base-200 p-8 sm:p-12 text-center flex flex-col items-center justify-center space-y-3 rounded-2xl">
+        <div className="card bg-base-100  p-8 sm:p-12 text-center flex flex-col items-center justify-center space-y-3 rounded-2xl">
           <ClipboardList className="w-14 h-14 text-base-content/20" />
           <h3 className="text-lg sm:text-xl font-bold">No Rental Requests Found</h3>
           <p className="text-xs sm:text-sm text-base-content/60 max-w-md">
@@ -124,131 +170,162 @@ export default function MyRentals() {
           </p>
         </div>
       ) : (
-        /* UI Improvements: Padding, Row Spacing & Responsive View Box */
-        <div className="overflow-x-auto border border-base-200 rounded-2xl bg-base-100 shadow-sm">
-          <table className="table w-full border-collapse">
-            {/* Table Head */}
-            <thead>
-              <tr className="bg-base-200/60 border-b border-base-200 text-base-content/80 text-xs sm:text-sm font-bold uppercase tracking-wider">
-                <th className="py-4 pl-6">Property / Owner</th>
-                <th className="py-4">Location</th>
-                <th className="py-4">Monthly Rent</th>
-                <th className="py-4">Move-in Date</th>
-                <th className="py-4">Status</th>
-                <th className="py-4 pr-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            
-            {/* Table Body */}
-            <tbody className="divide-y divide-base-200/50">
-              {rentals.map((rental) => (
-                <tr key={rental.id} className="hover:bg-base-200/20 transition-all duration-150">
-                  {/* Property Details Column */}
-                  <td className="py-5 pl-6 min-w-[280px]">
-                    <div className="flex items-center gap-4">
-                      <div className="avatar shrink-0">
-                        <div className="mask mask-squircle w-14 h-14 relative bg-base-200 border border-base-300">
-                          <Image
-                            src={rental.property.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6"}
-                            alt={rental.property.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="font-extrabold text-sm sm:text-base text-base-content line-clamp-1 hover:text-primary transition-colors cursor-pointer">
-                          {rental.property.title}
-                        </div>
-                        {/* Owner Information Layout with fallback icon */}
-                        <div className="flex flex-col gap-0.5 bg-base-200/40 px-2.5 py-1.5 rounded-xl border border-base-200 max-w-fit">
-                          <div className="text-[11px] text-base-content/70 font-semibold flex items-center gap-1">
-                            <User className="w-3 h-3 text-primary shrink-0" />
-                            Owner: <span className="text-base-content font-bold">{rental.property.landlord?.name || "Not Found"}</span>
-                          </div>
-                          {rental.property.landlord?.email && (
-                            <span className="text-[10px] text-base-content/40 pl-4 truncate max-w-[180px]">
-                              {rental.property.landlord.email}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+        <>
+          {/* MOBILE VIEW: Card Layout (Hidden on Large Screens) */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {rentals.map((rental) => (
+              <div key={rental.id} className="card bg-base-100 border border-base-200 rounded-2xl p-4 shadow-sm space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="avatar shrink-0">
+                    <div className="mask mask-squircle w-16 h-16 relative bg-base-200 border border-base-300">
+                      <Image
+                        src={rental.property.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6"}
+                        alt={rental.property.title}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-                  </td>
-
-                  {/* Location Column */}
-                  <td className="py-5 text-xs sm:text-sm text-base-content/70 min-w-[160px]">
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
-                      <span className="truncate max-w-[150px]" title={rental.property.location}>
-                        {rental.property.location}
-                      </span>
+                  </div>
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <h3 className="font-extrabold text-sm text-base-content line-clamp-1 hover:text-primary transition-colors cursor-pointer">
+                      {rental.property.title}
+                    </h3>
+                    <div className="flex items-center gap-1 text-xs text-base-content/70">
+                      <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span className="truncate">{rental.property.location}</span>
                     </div>
-                  </td>
+                    <div className="text-sm font-bold text-base-content pt-0.5">
+                      ৳{rental.property.price.toLocaleString("en-BD")} <span className="text-[10px] font-medium text-base-content/50">/mo</span>
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Price Column */}
-                  <td className="py-5 text-xs sm:text-sm font-bold text-base-content min-w-[120px]">
-                    ৳{rental.property.price.toLocaleString("en-BD")} <span className="text-[10px] font-medium text-base-content/50">/mo</span>
-                  </td>
+                {/* Landlord Info Stack */}
+                <div className="flex flex-col gap-0.5 bg-base-200/40 px-3 py-2 rounded-xl border border-base-200 text-xs">
+                  <div className="text-[11px] text-base-content/70 font-semibold flex items-center gap-1">
+                    <User className="w-3 h-3 text-primary shrink-0" />
+                    Owner: <span className="text-base-content font-bold">{rental.property.landlord?.name || "Not Found"}</span>
+                  </div>
+                  {rental.property.landlord?.email && (
+                    <span className="text-[10px] text-base-content/40 pl-4 truncate">
+                      {rental.property.landlord.email}
+                    </span>
+                  )}
+                </div>
 
-                  {/* Date Column */}
-                  <td className="py-5 text-xs sm:text-sm font-medium text-base-content/70 min-w-[110px]">
-                    {new Date(rental.moveInDate).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric"
-                    })}
-                  </td>
-
-                  {/* Status Badge Column */}
-                  <td className="py-5 min-w-[110px]">
+                {/* Date, Status and Actions Metadata */}
+                <div className="flex justify-between items-center text-xs pt-1 border-t border-base-200/60">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase text-base-content/40 tracking-wider">Move-in Date</span>
+                    <span className="font-semibold text-base-content/80">
+                      {new Date(rental.moveInDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                      })}
+                    </span>
+                  </div>
+                  <div>
                     {renderStatusBadge(rental.status)}
-                  </td>
+                  </div>
+                </div>
 
-                  {/* Actions Column */}
-                  <td className="py-5 pr-6 text-right min-w-[130px]">
-                    {rental.status === "APPROVED" && (
-                      <button
-                        onClick={() => handlePayment(rental.id)}
-                        disabled={actionLoading === rental.id}
-                        className="btn btn-primary btn-sm sm:btn-md gap-1.5 rounded-xl text-white shadow-sm normal-case font-bold px-4 hover:scale-[1.02] active:scale-95 transition-transform"
-                      >
-                        {actionLoading === rental.id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <CreditCard className="w-3.5 h-3.5" />
-                        )}
-                        Pay Now
-                      </button>
-                    )}
+                {/* Actions Block for mobile */}
+                <div className="pt-2">
+                  {renderActionButtons(rental)}
+                </div>
+              </div>
+            ))}
+          </div>
 
-                    {rental.status === "ACTIVE" && (
-                      <button 
-                        onClick={() => alert("Review feature coming soon!")}
-                        className="btn btn-success btn-outline btn-sm sm:btn-md gap-1.5 rounded-xl normal-case font-bold px-4"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        Leave Review
-                      </button>
-                    )}
-
-                    {rental.status === "PENDING" && (
-                      <span className="text-xs font-semibold px-2 py-1 bg-base-200 text-base-content/50 rounded-md italic">Awaiting Host</span>
-                    )}
-
-                    {rental.status === "REJECTED" && (
-                      <span className="text-xs text-error/80 font-bold bg-error/10 px-2 py-1 rounded-md">Declined</span>
-                    )}
-
-                    {rental.status === "COMPLETED" && (
-                      <span className="text-xs text-base-content/40 font-bold bg-base-200 px-2 py-1 rounded-md">Closed</span>
-                    )}
-                  </td>
+          {/* DESKTOP VIEW: Table Layout (Hidden on Small Screens) */}
+          <div className="hidden md:block overflow-x-auto border border-base-200 rounded-2xl bg-base-100 shadow-sm">
+            <table className="table w-full border-collapse">
+              <thead>
+                <tr className="bg-base-200/60 border-b border-base-200 text-base-content/80 text-sm font-bold uppercase tracking-wider">
+                  <th className="py-4 pl-6">Property / Owner</th>
+                  <th className="py-4">Location</th>
+                  <th className="py-4">Monthly Rent</th>
+                  <th className="py-4">Move-in Date</th>
+                  <th className="py-4">Status</th>
+                  <th className="py-4 pr-6 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              
+              <tbody className="divide-y divide-base-200/50">
+                {rentals.map((rental) => (
+                  <tr key={rental.id} className="hover:bg-base-200/20 transition-all duration-150">
+                    {/* Property Details Column */}
+                    <td className="py-5 pl-6 min-w-[280px]">
+                      <div className="flex items-center gap-4">
+                        <div className="avatar shrink-0">
+                          <div className="mask mask-squircle w-14 h-14 relative bg-base-200 border border-base-300">
+                            <Image
+                              src={rental.property.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6"}
+                              alt={rental.property.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-extrabold text-base text-base-content line-clamp-1 hover:text-primary transition-colors cursor-pointer">
+                            {rental.property.title}
+                          </div>
+                          <div className="flex flex-col gap-0.5 bg-base-200/40 px-2.5 py-1.5 rounded-xl border border-base-200 max-w-fit">
+                            <div className="text-[11px] text-base-content/70 font-semibold flex items-center gap-1">
+                              <User className="w-3 h-3 text-primary shrink-0" />
+                              Owner: <span className="text-base-content font-bold">{rental.property.landlord?.name || "Not Found"}</span>
+                            </div>
+                            {rental.property.landlord?.email && (
+                              <span className="text-[10px] text-base-content/40 pl-4 truncate max-w-[180px]">
+                                {rental.property.landlord.email}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Location Column */}
+                    <td className="py-5 text-sm text-base-content/70 min-w-[160px]">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
+                        <span className="truncate max-w-[150px]" title={rental.property.location}>
+                          {rental.property.location}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Price Column */}
+                    <td className="py-5 text-sm font-bold text-base-content min-w-[120px]">
+                      ৳{rental.property.price.toLocaleString("en-BD")} <span className="text-[10px] font-medium text-base-content/50">/mo</span>
+                    </td>
+
+                    {/* Date Column */}
+                    <td className="py-5 text-sm font-medium text-base-content/70 min-w-[110px]">
+                      {new Date(rental.moveInDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                      })}
+                    </td>
+
+                    {/* Status Badge Column */}
+                    <td className="py-5 min-w-[110px]">
+                      {renderStatusBadge(rental.status)}
+                    </td>
+
+                    {/* Actions Column */}
+                    <td className="py-5 pr-6 text-right min-w-[130px]">
+                      {renderActionButtons(rental)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
