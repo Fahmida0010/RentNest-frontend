@@ -1,38 +1,50 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 
 export default function Hero() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch((error) => {
+        console.log("Video autoplay failed:", error);
+      });
+    }
+  }, []);
+
   return (
-    <section className="relative h-[80vh] min-h-[500px] w-full flex items-center justify-center overflow-hidden">
+    <section className="relative h-[80vh] min-h-[500px] w-full flex items-center justify-center overflow-hidden bg-neutral-900">
       {/* 1. Background Video Player */}
       <div className="absolute inset-0 z-0">
         <video
+          ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
           className="w-full h-full object-cover"
         >
-          {/* একটি প্রফেশনাল রিয়েল এস্টেট/অ্যাপার্টমেন্ট ইন্টারিয়র অনলাইন ভিডিও */}
+          {/* Option A: Modern Living Room (Pexels Public Direct Link) */}
           <source
-            src="https://assets.mixkit.co/videos/preview/mixkit-interior-of-a-modern-apartment-4433-large.mp4"
+            src="/videos/rental_apartment.mp4"
             type="video/mp4"
           />
-          Your browser does not support the video tag.
+
+
         </video>
-        {/* Dark Overlay - ভিডিওর ওপর টেক্সট যেন ক্লিয়ারলি পড়া যায় */}
-        <div className="absolute inset-0 bg-neutral-900/60 mix-blend-multiply" />
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       {/* 2. Hero Content Area */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-8 text-neutral-content">
-        <div className="badge badge-primary gap-2 p-3 font-medium text-white shadow-lg animate-fade-in">
-          🏠 Find & List Rental Properties with Ease
-        </div>
+      
         
-        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight drop-shadow-md">
+        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight drop-shadow-md text-white">
           Discover Your Perfect <span className="text-primary">Nest</span> To Rent
         </h1>
         

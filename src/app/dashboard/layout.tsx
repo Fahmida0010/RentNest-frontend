@@ -44,6 +44,7 @@ export default function DashboardLayout({
       { label: "Add Property", path: "/dashboard/add-property", icon: PlusCircle },
          { label: "My Properties", path: "/dashboard/my-properties", icon: PlusCircle },
       { label: "Manage Requests", path: "/dashboard/manage-requests", icon: ClipboardList },
+        { label: "Payment History", path: "/dashboard/landpayment-history", icon: CreditCard },
     ],
     ADMIN: [
       { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
