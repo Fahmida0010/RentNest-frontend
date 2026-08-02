@@ -13,13 +13,13 @@ export default function PaymentFailed() {
         {/* Fail Icon */}
         <div className="flex justify-center">
           <div className="bg-error/5 dark:bg-error/10 p-4 rounded-full text-error">
-            <AlertTriangle className="w-16 h-16" />
+            <AlertTriangle className="w-16 h-16 text-red-500" />
           </div>
         </div>
 
         {/* Headline */}
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-black text-base-content tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-red-800 text-base-content tracking-tight">
             Payment Failed!
           </h1>
           <p className="text-sm text-base-content/60 px-2">
@@ -42,8 +42,8 @@ export default function PaymentFailed() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Link 
-            href="/my-rentals" 
-            className="btn btn-error text-white flex-1 gap-2 rounded-xl normal-case font-bold order-2 sm:order-1 shadow-sm"
+            href="/dashboard/my-rentals" 
+            className="btn btn-error text-green-500 flex-1 gap-2 rounded-xl normal-case font-bold order-2 sm:order-1 shadow-sm"
           >
             <RefreshCw className="w-4 h-4" />
             Try Again

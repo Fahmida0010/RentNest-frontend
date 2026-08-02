@@ -31,10 +31,7 @@ export default function FeaturedProperties() {
         const response = await axiosInstance.get("/properties");
         const allProperties: Property[] = response.data?.data || [];
         
-        // ব্যাকএন্ড যদি নতুনগুলো প্রথমে না দেয়, তবে reverse() করে নিতে পারেন:
-        // const latest = [...allProperties].reverse().slice(0, 6);
-        
-        // সরাসরি লেটেস্ট ৬টি প্রপার্টি স্লাইস করা হলো
+     
         const latest = allProperties.slice(0, 6);
         setFeaturedProperties(latest);
       } catch (error) {
@@ -143,9 +140,9 @@ export default function FeaturedProperties() {
                     
                     <Link 
                       href={`/properties/${property.id}`} 
-                      className="btn btn-primary btn-block rounded-xl font-bold gap-2 text-sm shadow-sm"
+                      className="btn bg-amber-300 btn-block rounded-xl font-bold gap-2  text-green-500 text-sm shadow-sm"
                     >
-                      View Details <ArrowRight className="w-4 h-4" />
+                      View Details <ArrowRight className="w-4 h-4 text-green-500" />
                     </Link>
                   </div>
                 </div>

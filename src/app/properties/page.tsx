@@ -152,8 +152,9 @@ export default function PropertiesMainPage() {
                       <div className="flex items-center gap-1"><BedDouble className="w-4 h-4 text-primary" /> <span>{property.bedrooms} Beds</span></div>
                       <div className="flex items-center gap-1"><Bath className="w-4 h-4 text-primary" /> <span>{property.bathrooms} Baths</span></div>
                     </div>
-                    <Link href={`/properties/${property.id}`} className="btn btn-primary btn-block rounded-xl font-bold gap-2 text-sm shadow-sm">
-                      View Details <ArrowRight className="w-4 h-4" />
+                    <Link href={`/properties/${property.id}`} className="btn bg-amber-300 btn-block rounded-xl 
+                    text-green-900 font-bold gap-2 text-sm shadow-sm">
+                      View Details <ArrowRight className="w-4 h-4 flex bg-green-500" />
                     </Link>
                   </div>
                 </div>

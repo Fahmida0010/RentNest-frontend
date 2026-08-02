@@ -27,7 +27,7 @@ const ManageRequests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  // ১. ল্যান্ডলর্ডের কাছে আসা সকল রেন্টাল রিকোয়েস্ট ফেচ করা
+  // ১. ল্যান্ডলর্ডের কাছে আসা সকল রেন্টাল রিকোয়েস্ট ফেচ করা
   const loadLandlordRequests = async () => {
     try {
       setLoading(true);
@@ -52,7 +52,7 @@ const ManageRequests: React.FC = () => {
     loadLandlordRequests();
   }, []);
 
-  // ২. রিকোয়েস্ট স্ট্যাটাস আপডেট হ্যান্ডলার (APPROVED / REJECTED)
+  // ২. রিকোয়েস্ট স্ট্যাটাস আপডেট হ্যান্ডলার (APPROVED / REJECTED)
   const handleStatusUpdate = async (id: string, newStatus: 'APPROVED' | 'REJECTED') => {
     const isApprove = newStatus === 'APPROVED';
     
@@ -85,7 +85,6 @@ const ManageRequests: React.FC = () => {
             });
 
             // রিয়েল-টাইম লোকাল স্টেট রিফ্রেশ/আপডেট
-            // যদি APPROVED হয়, ব্যাকএন্ড লজিক অনুযায়ী ওই প্রপার্টির বাকি সব PENDING রিকোয়েস্ট রিজেক্ট হয়ে যাবে। তাই পুরো লিস্টটি রি-ফেচ করাই সবচেয়ে নিরাপদ।
             if (isApprove) {
               loadLandlordRequests();
             } else {
@@ -134,7 +133,7 @@ const ManageRequests: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6 bg-white shadow-md rounded-xl mt-6 md:mt-10 border border-gray-100">
+    <div className="max-w-7xl mx-auto p-4 md:p-6 bg-white shadow-md rounded-xl mt-6 md:mt-10 border border-gray-100">
       {/* Page Header */}
       <div className="mb-6 border-b border-gray-100 pb-4">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800">Rental Requests</h2>
@@ -148,7 +147,7 @@ const ManageRequests: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* 📱 Mobile View: Card Layout */}
+          {/* 📱 Mobile View: Card Layout (Exactly Same) */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {requests.map((request) => (
               <div key={request.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
@@ -218,45 +217,49 @@ const ManageRequests: React.FC = () => {
             ))}
           </div>
 
-          {/* 💻 Desktop View: Table Layout */}
-          <div className="hidden md:block overflow-x-auto border border-gray-100 rounded-xl shadow-inner">
-            <table className="min-w-full divide-y divide-gray-200">
+          {/* 💻 Mid-level and Large Screen View: Responsive Table Layout */}
+          <div className="hidden md:block w-full overflow-x-auto border border-gray-100 rounded-xl shadow-inner">
+            <table className="w-full min-w-[800px] table-auto divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Property</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tenant Details</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Move-In Date</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-5 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th scope="col" className="w-[30%] px-4 lg:px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Property</th>
+                  <th scope="col" className="w-[30%] px-4 lg:px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tenant Details</th>
+                  <th scope="col" className="w-[20%] px-4 lg:px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Move-In Date</th>
+                  <th scope="col" className="w-[10%] px-4 lg:px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="w-[10%] px-4 lg:px-6 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {requests.map((request) => (
                   <tr key={request.id} className="hover:bg-slate-50/50 transition-colors">
                     {/* Property Column */}
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-gray-900">{request.property?.title}</div>
-                      <div className="text-xs text-gray-400 max-w-[200px] truncate">{request.property?.location}</div>
-                      <div className="text-xs font-bold text-blue-600 mt-0.5">${request.property?.price.toLocaleString()}/mo</div>
+                    <td className="px-4 lg:px-6 py-4">
+                      <div className="text-sm font-semibold text-gray-900 break-words line-clamp-2">{request.property?.title}</div>
+                      <div className="text-xs text-gray-400 max-w-[250px] truncate mt-0.5" title={request.property?.location}>
+                        {request.property?.location}
+                      </div>
+                      <div className="text-xs font-bold text-blue-600 mt-1">${request.property?.price.toLocaleString()}/mo</div>
                     </td>
                     
                     {/* Tenant Details Column */}
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 flex items-center gap-1">
-                        <User size={13} className="text-gray-400" /> {request.tenant?.name}
+                    <td className="px-4 lg:px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
+                        <User size={13} className="text-gray-400 shrink-0" /> 
+                        <span className="truncate max-w-[180px]">{request.tenant?.name}</span>
                       </div>
-                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <Mail size={12} className="text-gray-400" /> {request.tenant?.email}
+                      <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-1" title={request.tenant?.email}>
+                        <Mail size={12} className="text-gray-400 shrink-0" /> 
+                        <span className="truncate max-w-[180px]">{request.tenant?.email}</span>
                       </div>
-                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <Phone size={12} className="text-gray-400" /> {request.tenant?.phone || 'N/A'}
+                      <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-1">
+                        <Phone size={12} className="text-gray-400 shrink-0" /> {request.tenant?.phone || 'N/A'}
                       </div>
                     </td>
 
                     {/* Move in Date Column */}
-                    <td className="px-5 py-4 whitespace-nowrap">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-700 font-medium flex items-center gap-1.5">
-                        <Calendar size={14} className="text-gray-400" />
+                        <Calendar size={14} className="text-gray-400 shrink-0" />
                         {new Date(request.moveInDate).toLocaleDateString('en-US', {
                           year: 'numeric', month: 'short', day: 'numeric'
                         })}
@@ -267,33 +270,33 @@ const ManageRequests: React.FC = () => {
                     </td>
 
                     {/* Status Column */}
-                    <td className="px-5 py-4 whitespace-nowrap">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                       <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusBadge(request.status)}`}>
                         {request.status}
                       </span>
                     </td>
 
                     {/* Action Column */}
-                    <td className="px-5 py-4 whitespace-nowrap text-center text-sm font-medium">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                       {request.status === 'PENDING' ? (
-                        <div className="flex justify-center items-center space-x-2">
+                        <div className="flex justify-center items-center gap-2">
                           <button
                             onClick={() => handleStatusUpdate(request.id, 'APPROVED')}
                             disabled={actionLoadingId === request.id}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition-all text-xs font-semibold shadow-sm border border-emerald-200 disabled:opacity-50"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition-all text-xs font-semibold shadow-sm border border-emerald-200 disabled:opacity-50"
                             title="Approve Request"
                           >
-                            {actionLoadingId === request.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                            Approve
+                            {actionLoadingId === request.id ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                            <span>Approve</span>
                           </button>
                           <button
                             onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
                             disabled={actionLoadingId === request.id}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white rounded-lg transition-all text-xs font-semibold shadow-sm border border-rose-200 disabled:opacity-50"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white rounded-lg transition-all text-xs font-semibold shadow-sm border border-rose-200 disabled:opacity-50"
                             title="Reject Request"
                           >
-                            {actionLoadingId === request.id ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-                            Reject
+                            {actionLoadingId === request.id ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+                            <span>Reject</span>
                           </button>
                         </div>
                       ) : (

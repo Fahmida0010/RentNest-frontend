@@ -15,7 +15,7 @@ import {
   Send 
 } from "lucide-react";
 import axiosInstance from "@/lib/axios";
-import Swal from "sweetalert2"; // SweetAlert2 ইমপোর্ট করা হয়েছে
+import Swal from "sweetalert2"; 
 
 interface Property {
   id: string;
@@ -93,7 +93,7 @@ export default function PropertyDetailsPage() {
       setRequestSuccess(true);
       (document.getElementById('booking_modal') as HTMLDialogElement).close();
       
-      // সুন্দর সাকসেস অ্যালার্ট
+      
       Swal.fire({
         icon: "success",
         title: "Request Sent!",
@@ -144,7 +144,7 @@ export default function PropertyDetailsPage() {
               
               <span className={`absolute top-4 right-4 text-xs font-extrabold tracking-wider uppercase px-4 py-2 rounded-xl backdrop-blur-md shadow-lg border ${
                 property.status === "AVAILABLE" 
-                  ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/40" 
+                  ? "bg-white text-emerald-500 border-emerald-500/40" 
                   : "bg-rose-500/20 text-rose-500 border-rose-500/40"
               }`}>
                 ● {property.status}
