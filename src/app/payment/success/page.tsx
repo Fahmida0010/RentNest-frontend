@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Calendar, ArrowRight, ClipboardList, ShieldCheck, Wallet, Star, Home } from "lucide-react";
 import { toast } from "sonner"; 
 import axiosInstance from "@/lib/axios";
 
-export default function PaymentSuccess() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const transactionId = searchParams.get("tran_id") || `TXN-${Date.now().toString().slice(-6)}`;
   const propertyId = searchParams.get("propertyId");
@@ -15,14 +15,14 @@ export default function PaymentSuccess() {
   const rawMethod = searchParams.get("method") || "SSLCommerz";
   const paymentMethod = rawMethod.replace(/[-_]/g, " ").toUpperCase();
 
-  // 🛠️ রিভিউর জন্য স্টেট
+  
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>("");
   const [hoveredRating, setHoveredRating] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isReviewed, setIsReviewed] = useState<boolean>(false);
 
-  // 🛠️ রিভিউ সাবমিট হ্যান্ডলার
+  
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!propertyId) {
@@ -32,7 +32,7 @@ export default function PaymentSuccess() {
 
     setIsSubmitting(true);
     try {
-      // 🛠️ axiosInstance ইন্টারসেপ্টর টোকেন হ্যান্ডেল করায় headers রিমুভ করা হয়েছে
+  
       const response = await axiosInstance.post("/reviews", {
         propertyId,
         rating,
@@ -200,5 +200,18 @@ export default function PaymentSuccess() {
         </div>
       </div>
     </div>
+  );
+}
+
+// এই অংশটি ফাইলটির একদম নিচে বসাবেন
+export default function PaymentSuccess() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
