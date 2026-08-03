@@ -21,10 +21,10 @@ export function useAuth() {
 
     if (token) {
       try {
-        // JWT Token ডিকোড করে ইউজারের ডাটা স্টেট-এ সেট করা
+      
         const decoded: any = jwtDecode(token);
         
-        // টোকেন এক্সপায়ারড হয়ে গেছে কি না চেক
+
         if (decoded.exp * 1000 < Date.now()) {
           logout();
         } else {
@@ -47,7 +47,7 @@ export function useAuth() {
   const logout = () => {
     Cookies.remove("token");
     setUser(null);
-    window.location.href = "/login";
+    window.location.href = "/auth/login";
   };
 
   return { user, setUser, loading, logout };

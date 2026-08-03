@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard,
   Users,
-  Home,
+  Home as HomeIcon,
   ClipboardList,
   PlusCircle,
   CreditCard,
@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -23,6 +24,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout, loading } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -36,13 +38,24 @@ export default function DashboardLayout({
 
   if (!user) return null;
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   const menu = {
     TENANT: [
+      { label: "Go Back Home", path: "/", icon: ArrowLeft },
       { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
       { label: "My Rentals", path: "/dashboard/my-rentals", icon: ClipboardList },
       { label: "Payment History", path: "/dashboard/payment-history", icon: CreditCard },
     ],
     LANDLORD: [
+      { label: "Go Back Home", path: "/", icon: ArrowLeft },
       { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
       { label: "Add Property", path: "/dashboard/add-property", icon: PlusCircle },
       { label: "My Properties", path: "/dashboard/my-properties", icon: PlusCircle },
@@ -50,9 +63,10 @@ export default function DashboardLayout({
       { label: "Payment History", path: "/dashboard/landpayment-history", icon: CreditCard },
     ],
     ADMIN: [
+      { label: "Go Back Home", path: "/", icon: ArrowLeft },
       { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
       { label: "Manage Users", path: "/dashboard/manage-users", icon: Users },
-      { label: "All Properties", path: "/dashboard/all-properties", icon: Home },
+      { label: "All Properties", path: "/dashboard/all-properties", icon: HomeIcon },
       { label: "All Rentals", path: "/dashboard/all-rentals", icon: ClipboardList },
     ],
   };
@@ -62,9 +76,11 @@ export default function DashboardLayout({
   const renderNavLinks = (isMobile: boolean = false) => {
     return menus.map((item) => {
       const Icon = item.icon;
-      const active = item.path === "/dashboard" 
-        ? pathname === "/dashboard" 
-        : pathname.startsWith(item.path);
+      const active = item.path === "/" 
+        ? pathname === "/" 
+        : item.path === "/dashboard"
+          ? pathname === "/dashboard"
+          : pathname.startsWith(item.path);
 
       return (
         <li key={item.path}>
@@ -90,7 +106,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen w-full bg-slate-50 text-slate-800">
       
-      {/* ১. ডেস্কটপ সাইডবার (বড় স্ক্রিনে বামে ফিক্সড থাকবে, স্ক্রিন লক করবে না) */}
+      {/* ১. ডেস্কটপ সাইডবার */}
       <aside className="hidden lg:flex w-64 h-screen bg-white border-r border-slate-200 flex-col justify-between sticky top-0 shrink-0">
         <div>
           <div className="p-6 border-b border-slate-100">
@@ -110,7 +126,7 @@ export default function DashboardLayout({
 
         <div className="border-t border-slate-100 p-4">
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="btn btn-ghost hover:bg-red-50 hover:text-red-600 text-slate-600 w-full justify-start gap-3 rounded-xl font-semibold"
           >
             <LogOut className="w-5 h-5" />
@@ -119,9 +135,8 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* ২. মোবাইল রেসপন্সিভ ড্রয়ার (শুধুমাত্র lg স্ক্রিনের নিচে কাজ করবে) */}
+      {/* ২. মোবাইল রেসপন্সিভ ড্রয়ার */}
       <div className={`fixed inset-0 z-50 flex lg:hidden ${isMobileOpen ? "visible" : "invisible"}`}>
-        {/* ব্যাকড্রপ ওভারলে - শুধুমাত্র তখনই দেখাবে যখন মোবাইল মেনু ট্রিপড হবে */}
         <div 
           className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${
             isMobileOpen ? "opacity-100" : "opacity-0"
@@ -129,7 +144,6 @@ export default function DashboardLayout({
           onClick={() => setIsMobileOpen(false)} 
         />
         
-        {/* মোবাইল স্লাইডিং মেনু */}
         <aside className={`relative w-64 max-w-xs bg-white h-full flex flex-col justify-between z-50 shadow-2xl transition-transform duration-300 ease-in-out ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}>
@@ -158,7 +172,7 @@ export default function DashboardLayout({
 
           <div className="border-t border-slate-100 p-4">
             <button 
-              onClick={logout} 
+              onClick={handleLogout}
               className="btn btn-ghost hover:bg-red-50 hover:text-red-600 text-slate-600 w-full justify-start gap-3 rounded-xl font-semibold"
             >
               <LogOut className="w-5 h-5" /> 
@@ -168,25 +182,24 @@ export default function DashboardLayout({
         </aside>
       </div>
 
-      {/* ৩. মেইন পেজ কন্টেন্ট এরিয়া */}
-      <div className="flex flex-col flex-1 min-h-screen w-full min-w-0">
-        {/* মোবাইলের টপ বার */}
-        <div className="navbar bg-white border-b border-slate-200 lg:hidden sticky top-0 z-30 px-4 min-h-[64px]">
-          <button 
-            onClick={() => setIsMobileOpen(true)} 
-            className="btn btn-square btn-ghost text-slate-700 hover:bg-slate-100"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="font-bold text-lg ml-2 text-slate-900">Dashboard</div>
-        </div>
+      {/* ৩. মেইন পেজ কন্টেন্ট এরিয়া */}
+      <div className="flex flex-col flex-1 min-h-screen w-full
+       min-w-0">
+     <div className="navbar bg-white border-b border-slate-200 lg:hidden sticky top-0 z-30 px-4 min-h-[64px] flex items-center justify-start gap-2">
+    <button 
+      onClick={() => setIsMobileOpen(true)} 
+      className="btn btn-square btn-ghost text-slate-700 hover:bg-slate-100 shrink-0"
+    >
+      <Menu className="w-6 h-6" />
+    </button>
+    <div className="font-bold text-lg text-slate-900 whitespace-nowrap">Dashboard</div>
+  </div>
 
-        {/* মেইন পেজ রেন্ডার এরিয়া */}
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          {children}
-        </main>
+  <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+    {children}
+  </main>
+</div>
       </div>
 
-    </div>
   );
 }

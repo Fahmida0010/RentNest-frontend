@@ -29,7 +29,6 @@ export default function AllRentalRequests() {
   const [rentals, setRentals] = useState<RentalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchRentals = async () => {
     try {
@@ -49,26 +48,18 @@ export default function AllRentalRequests() {
     fetchRentals();
   }, []);
 
-  const handleUpdateStatus = async (rentalId: string, newStatus: string) => {
-    try {
-      setUpdatingId(rentalId);
-      setError("");
-      // Assuming backend route is PATCH /admin/rentals/:id
-      const response = await axiosInstance.patch(`/admin/rentals/${rentalId}`, {
-        status: newStatus,
-      });
-
-      if (response.data?.success) {
-        setRentals((prev) =>
-          prev.map((rental) =>
-            rental.id === rentalId ? { ...rental, status: newStatus as any } : rental
-          )
-        );
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update status.");
-    } finally {
-      setUpdatingId(null);
+  // স্ট্যাটাস কালার জেনারেট করার হেল্পার ফাংশন
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case "APPROVED":
+      case "ACTIVE":
+      case "COMPLETED":
+        return "bg-green-100 text-green-700 border border-green-200";
+      case "PENDING":
+        return "bg-amber-100 text-amber-700 border border-amber-200";
+      case "REJECTED":
+      default:
+        return "bg-red-100 text-red-700 border border-red-200";
     }
   };
 
@@ -85,7 +76,7 @@ export default function AllRentalRequests() {
       <div className="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-slate-900">Rental Requests</h1>
-          <p className="text-xs md:text-sm text-slate-500">Track and update tenant application statuses.</p>
+          <p className="text-xs md:text-sm text-slate-500">Track and view tenant application statuses.</p>
         </div>
         <span className="badge badge-neutral mt-2 sm:mt-0 font-semibold">{rentals.length} Applications</span>
       </div>
@@ -105,14 +96,13 @@ export default function AllRentalRequests() {
               <th>Tenant</th>
               <th>Move-in Date</th>
               <th>Payment Info</th>
-              <th>Current Status</th>
-              <th className="text-right">Change Status</th>
+              <th className="text-right">Application Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rentals.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-8 text-slate-400">No requests found.</td>
+                <td colSpan={5} className="text-center py-8 text-slate-400">No requests found.</td>
               </tr>
             ) : (
               rentals.map((rental) => (
@@ -136,27 +126,10 @@ export default function AllRentalRequests() {
                       <span className="badge badge-xs badge-warning border-none px-1.5 py-1">Unpaid</span>
                     )}
                   </td>
-                  <td>
-                    <span className={`badge badge-sm font-medium ${
-                      rental.status === "APPROVED" || rental.status === "ACTIVE" ? "bg-green-100 text-green-700" :
-                      rental.status === "PENDING" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
-                    } border-none`}>
+                  <td className="text-right">
+                    <span className={`badge badge-sm font-bold uppercase tracking-wider px-2.5 py-2.5 rounded-full ${getStatusClass(rental.status)}`}>
                       {rental.status}
                     </span>
-                  </td>
-                  <td className="text-right">
-                    <select
-                      value={rental.status}
-                      disabled={updatingId === rental.id}
-                      onChange={(e) => handleUpdateStatus(rental.id, e.target.value)}
-                      className="select select-bordered select-sm rounded-lg text-xs bg-white text-slate-800 focus:outline-none"
-                    >
-                      <option value="PENDING">PENDING</option>
-                      <option value="APPROVED">APPROVED</option>
-                      <option value="REJECTED">REJECTED</option>
-                      <option value="ACTIVE">ACTIVE</option>
-                      <option value="COMPLETED">COMPLETED</option>
-                    </select>
                   </td>
                 </tr>
               ))
@@ -172,38 +145,26 @@ export default function AllRentalRequests() {
         ) : (
           rentals.map((rental) => (
             <div key={rental.id} className="border border-slate-100 rounded-xl p-4 bg-slate-50/50 space-y-3">
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between items-start gap-2">
                 <div>
-                  <h3 className="font-bold text-slate-900">{rental.property?.title}</h3>
+                  <h3 className="font-bold text-slate-900 line-clamp-1">{rental.property?.title}</h3>
                   <p className="text-xs text-slate-500">${rental.property?.price} / month</p>
                 </div>
-                {updatingId === rental.id ? (
-                  <span className="loading loading-spinner loading-xs text-blue-600"></span>
-                ) : (
-                  <span className={`badge badge-sm ${rental.status === "APPROVED" || rental.status === "ACTIVE" ? "bg-green-100 text-green-700" : rental.status === "PENDING" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"} border-none`}>
-                    {rental.status}
-                  </span>
-                )}
+                <span className={`badge badge-sm font-bold uppercase tracking-wider shrink-0 px-2 py-2 rounded-full ${getStatusClass(rental.status)}`}>
+                  {rental.status}
+                </span>
               </div>
-              <div className="text-xs text-slate-600 space-y-1">
-                <p><strong>Tenant:</strong> {rental.tenant?.name} ({rental.tenant?.email})</p>
-                <p><strong>Move-in:</strong> {new Date(rental.moveInDate).toLocaleDateString()}</p>
-                <p><strong>Payment Status:</strong> {rental.payment ? "Paid ✅" : "Unpaid ❌"}</p>
-              </div>
-              <div className="pt-2 border-t border-slate-100">
-                <label className="block text-[11px] text-slate-400 font-semibold mb-1">Update Request Status</label>
-                <select
-                  value={rental.status}
-                  disabled={updatingId === rental.id}
-                  onChange={(e) => handleUpdateStatus(rental.id, e.target.value)}
-                  className="select select-bordered select-sm w-full rounded-xl text-xs bg-white text-slate-800"
-                >
-                  <option value="PENDING">PENDING</option>
-                  <option value="APPROVED">APPROVED</option>
-                  <option value="REJECTED">REJECTED</option>
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="COMPLETED">COMPLETED</option>
-                </select>
+              <div className="text-xs text-slate-600 space-y-1 bg-white p-3 rounded-xl border border-slate-100">
+                <p><strong className="text-slate-700">Tenant:</strong> {rental.tenant?.name} <span className="text-slate-400">({rental.tenant?.email})</span></p>
+                <p><strong className="text-slate-700">Move-in:</strong> {new Date(rental.moveInDate).toLocaleDateString()}</p>
+                <p>
+                  <strong className="text-slate-700">Payment:</strong>{" "}
+                  {rental.payment ? (
+                    <span className="text-green-600 font-medium">Paid ({rental.payment.transactionId})</span>
+                  ) : (
+                    <span className="text-amber-600 font-medium">Unpaid</span>
+                  )}
+                </p>
               </div>
             </div>
           ))

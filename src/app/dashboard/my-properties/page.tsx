@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import Link from 'next/link';
 import axiosInstance from '@/lib/axios';
-import { Pencil, Trash2, Loader2, Plus } from 'lucide-react';
+import { Pencil, Trash2, Loader2, Plus, MapPin, Tag } from 'lucide-react';
 
 interface Property {
   id: string;
@@ -102,7 +102,7 @@ const MyProperties: React.FC = () => {
     });
   };
 
-  // ৫. মোডাল সাবমিট করে DB-তে সেভ করার হ্যান্ডলার (Fixed Zod validation & Dynamic ID)
+  // ৫. মোডাল সাবমিট করে DB-তে সেভ করার হ্যান্ডলার
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProperty) return;
@@ -110,15 +110,13 @@ const MyProperties: React.FC = () => {
     try {
       setSubmitLoading(true);
       
-      // আপনার Zod স্কিমা অনুযায়ী রিকোয়েস্ট বডি সাজানো হলো (categoryName বাধ্যতামূলক)
       const updateData = {
         title: editingProperty.title,
         location: editingProperty.location,
         price: Number(editingProperty.price), 
-        categoryName: editingProperty.category?.name || "Uncategorized" // Zod Schema Validation Error Fix
+        categoryName: editingProperty.category?.name || "Uncategorized"
       };
 
-      // এখানে dynamic ID পাঠানো নিশ্চিত করা হয়েছে
       const response = await axiosInstance.put(
         `/landlord/properties/${editingProperty.id}`, 
         updateData
@@ -132,7 +130,6 @@ const MyProperties: React.FC = () => {
           confirmButtonColor: '#2563EB'
         });
 
-        // রিয়েল-টাইম লোকাল স্টেট আপডেট করা হলো
         setProperties((prev) =>
           prev.map((item) => (item.id === editingProperty.id ? { ...item, ...editingProperty } : item))
         );
@@ -164,12 +161,13 @@ const MyProperties: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6 bg-white shadow-md rounded-xl mt-6 md:mt-10 border border-gray-100">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div className="max-w-7xl mx-auto p-4 md:p-6 bg-white shadow-sm rounded-xl mt-4 md:mt-8 border border-gray-200">
+      
+      {/* 🔹 Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-5 border-b border-gray-100">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-gray-800">My Property Listings</h2>
-          <p className="text-sm text-gray-500">Manage all properties you have uploaded to the system</p>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900">My Property Listings</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Manage all properties you have uploaded to the system</p>
         </div>
         <Link 
           href="/dashboard/add-property" 
@@ -180,115 +178,144 @@ const MyProperties: React.FC = () => {
       </div>
 
       {properties.length === 0 ? (
-        <div className="text-center py-16 border-2 border-dashed border-gray-300 rounded-lg">
-          <p className="text-gray-500 text-lg mb-4">You have not listed any properties yet.</p>
-          <Link href="/dashboard/add-property" className="text-blue-600 hover:underline font-semibold">
+        <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+          <p className="text-gray-500 text-base mb-3">You have not listed any properties yet.</p>
+          <Link href="/dashboard/add-property" className="text-blue-600 hover:text-blue-700 font-semibold text-sm underline underline-offset-4">
             Click here to list your first property
           </Link>
         </div>
       ) : (
         <>
-          {/* 📱 Mobile View: Card Layout */}
+          {/* 📱 1. Mobile View: Optimized Card Layout */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {properties.map((property) => (
-              <div key={property.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:border-gray-300 transition">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-base font-semibold text-gray-900">{property.title}</h3>
-                  <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                    property.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {property.status}
-                  </span>
+              <div 
+                key={property.id} 
+                className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition duration-200 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <h3 className="text-base font-semibold text-gray-900 line-clamp-1">{property.title}</h3>
+                    <span className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full tracking-wider ${
+                      property.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                    }`}>
+                      {property.status}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1.5 my-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-1.5">
+                      <Tag size={14} className="text-gray-400 shrink-0" />
+                      <span className="truncate">{property.category?.name || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin size={14} className="text-gray-400 shrink-0" />
+                      <span className="truncate">{property.location}</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1"><span className="font-medium text-gray-400">Category:</span> {property.category?.name || 'N/A'}</p>
-                <p className="text-sm text-gray-500 mb-2"><span className="font-medium text-gray-400">Location:</span> {property.location}</p>
-                <p className="text-base font-bold text-gray-900 mb-4">${property.price.toLocaleString()}</p>
-                
-                <div className="flex gap-2 border-t border-gray-100 pt-3">
-                  <button
-                    onClick={() => openUpdateModal(property)}
-                    className="flex-1 inline-flex items-center justify-center text-sm text-emerald-600 bg-emerald-50 hover:bg-emerald-100 py-2 rounded-lg font-medium transition gap-1.5"
-                    title="Update"
-                  >
-                    <Pencil size={15} /> Update
-                  </button>
-                  <button
-                    onClick={() => handleDelete(property.id)}
-                    className="flex-1 inline-flex items-center justify-center text-sm text-red-600 bg-red-50 hover:bg-red-100 py-2 rounded-lg font-medium transition gap-1.5"
-                    title="Delete"
-                  >
-                    <Trash2 size={15} /> Delete
-                  </button>
+
+                <div className="mt-2">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-xs text-gray-400 font-medium">Monthly Rent</span>
+                    <p className="text-lg font-extrabold text-blue-600">${property.price.toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="flex gap-2 pt-3 border-t border-gray-100">
+                    <button
+                      onClick={() => openUpdateModal(property)}
+                      className="flex-1 inline-flex items-center justify-center text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 py-2 rounded-lg font-semibold transition gap-1.5 border border-emerald-200"
+                    >
+                      <Pencil size={14} /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(property.id)}
+                      className="flex-1 inline-flex items-center justify-center text-sm text-rose-700 bg-rose-50 hover:bg-rose-100/80 py-2 rounded-lg font-semibold transition gap-1.5 border border-rose-200"
+                    >
+                      <Trash2 size={14} /> Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* 💻 Desktop/Tablet View: Responsive Table Layout */}
-          <div className="hidden md:block overflow-x-auto border border-gray-100 rounded-xl shadow-inner bg-gray-50/30">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {properties.map((property) => (
-                  <tr key={property.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-gray-900">{property.title}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">{property.category?.name || 'N/A'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{property.location}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900">${property.price.toLocaleString()}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        property.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {property.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                      <div className="flex justify-center items-center space-x-2">
-                        <button
-                          onClick={() => openUpdateModal(property)}
-                          className="p-2 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-600 rounded-lg transition-all shadow-sm"
-                          title="Update Property"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(property.id)}
-                          className="p-2 text-red-600 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg transition-all shadow-sm"
-                          title="Delete Property"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+          {/* 💻 2. Desktop/Tablet View: Premium Responsive Table Layout */}
+          <div className="hidden md:block overflow-hidden border border-gray-200 rounded-xl shadow-sm bg-white">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 table-auto">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Title</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Location</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Price</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {properties.map((property) => (
+                    <tr key={property.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="px-6 py-4 max-w-[220px]">
+                        <div className="text-sm font-semibold text-gray-900 truncate" title={property.title}>
+                          {property.title}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 text-sm text-gray-700">
+                          <Tag size={13} className="text-gray-400" />
+                          {property.category?.name || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 max-w-[180px]">
+                        <div className="text-sm text-gray-500 truncate" title={property.location}>
+                          {property.location}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-gray-900">
+                          ${property.price.toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 inline-flex text-xs font-bold leading-5 rounded-full tracking-wide ${
+                          property.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-150' : 'bg-rose-50 text-rose-700 border border-rose-150'
+                        }`}>
+                          {property.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <div className="flex justify-center items-center space-x-2.5">
+                          <button
+                            onClick={() => openUpdateModal(property)}
+                            className="p-2 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-600 border border-emerald-100 rounded-lg transition-all shadow-sm"
+                            title="Update Property"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(property.id)}
+                            className="p-2 text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-100 rounded-lg transition-all shadow-sm"
+                            title="Delete Property"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}
 
-      {/* 📋 Update Property Modal Section */}
+      {/* 📋 3. Update Property Modal Section */}
       {isModalOpen && editingProperty && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-40 overflow-y-auto backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all border border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 overflow-y-auto backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-bold text-gray-800">Update Property</h3>
