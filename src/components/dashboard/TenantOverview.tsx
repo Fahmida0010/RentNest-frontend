@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ClipboardList, CreditCard, CheckCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import axiosInstance from "@/lib/axios";
+import Loading from "@/app/Loading/Loading";
 
 interface TenantStats {
   totalRequests: number;
@@ -41,11 +42,7 @@ export default function TenantOverview() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-48">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (error) {

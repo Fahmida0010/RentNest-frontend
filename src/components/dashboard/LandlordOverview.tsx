@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Home, ClipboardCheck, DollarSign } from "lucide-react";
 import axiosInstance from "@/lib/axios";
+import Loading from "@/app/Loading/Loading";
 
 interface LandlordStats {
   totalProperties: number;
@@ -38,11 +39,7 @@ export default function LandlordOverview() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-48">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-      </div>
-    );
+    return  <Loading />;
   }
 
   if (error) {

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import axiosInstance from "@/lib/axios";
+import Loading from "@/app/Loading/Loading";
 
 interface UserProfile {
   name: string;
@@ -80,11 +81,7 @@ export default function PaymentHistory() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex justify-center items-center">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-      </div>
-    );
+    return <Loading/>;
   }
 
   return (

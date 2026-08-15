@@ -8,7 +8,6 @@ import {
   Bath, 
   Search, 
   SlidersHorizontal, 
-  Home, 
   ArrowRight 
 } from "lucide-react";
 import axiosInstance from "@/lib/axios";
@@ -45,13 +44,11 @@ export default function PropertiesMainPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // axiosInstance ব্যবহার করে রিকোয়েস্ট (baseURL অলরেডি সেট করা আছে)
         const [resProps, resCats] = await Promise.all([
           axiosInstance.get("/properties"),
           axiosInstance.get("/categories")
         ]);
 
-        // Axios সরাসরি response.data-তে ব্যাকএন্ডের রেসপন্স দিয়ে দেয়
         setProperties(resProps.data?.data || []);
         setCategories(resCats.data?.data || []);
       } catch (error) {
@@ -74,8 +71,47 @@ export default function PropertiesMainPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-100">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+      <div className="min-h-screen bg-base-200 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Header Skeleton */}
+          <div className="space-y-3">
+            <div className="skeleton h-9 w-64 rounded-xl"></div>
+            <div className="skeleton h-4 w-48 rounded-lg"></div>
+          </div>
+
+          {/* Filter Bar Skeleton */}
+          <div className="bg-base-100 p-4 sm:p-6 rounded-2xl shadow-sm border border-base-300 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="skeleton h-12 w-full rounded-xl"></div>
+            <div className="skeleton h-12 w-full rounded-xl"></div>
+            <div className="skeleton h-12 w-full rounded-xl"></div>
+          </div>
+
+          {/* Grid View Shadow Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <div key={item} className="card bg-base-100 rounded-2xl shadow-md border border-base-300 overflow-hidden flex flex-col justify-between">
+                {/* Image Placeholder Skeleton */}
+                <div className="skeleton aspect-[4/3] w-full rounded-none"></div>
+
+                <div className="p-5 flex-grow flex flex-col justify-between space-y-4">
+                  <div className="space-y-3">
+                    <div className="skeleton h-6 w-3/4 rounded-md"></div>
+                    <div className="skeleton h-8 w-1/2 rounded-md"></div>
+                    <div className="skeleton h-4 w-2/3 rounded-md"></div>
+                  </div>
+
+                  <div className="pt-3 border-t border-base-200 space-y-3">
+                    <div className="flex gap-4">
+                      <div className="skeleton h-4 w-16 rounded"></div>
+                      <div className="skeleton h-4 w-16 rounded"></div>
+                    </div>
+                    <div className="skeleton h-11 w-full rounded-xl"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

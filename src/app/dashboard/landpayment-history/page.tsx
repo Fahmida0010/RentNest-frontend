@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Calendar, User, Mail, DollarSign, FileText, MapPin, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import axiosInstance from "@/lib/axios";
+import Loading from "@/app/Loading/Loading";
 
 interface Tenant {
   name: string;
@@ -82,11 +83,7 @@ export default function LandlordPaymentHistory() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-      </div>
-    );
+    return  <Loading />;
   }
 
   if (error) {

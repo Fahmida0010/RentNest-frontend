@@ -14,6 +14,10 @@ A modern **full-stack rental property marketplace** where tenants can discover r
 
 ---
 
+##Admin Demo
+"admin email= ahsan@gmail.com 
+ password= Ahsan26"
+
 ## 📂 GitHub Repository
 
 ### Frontend

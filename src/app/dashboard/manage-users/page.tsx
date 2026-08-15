@@ -1,5 +1,6 @@
 "use client";
 
+import Loading from "@/app/Loading/Loading";
 import axiosInstance from "@/lib/axios";
 import { useEffect, useState } from "react";
 
@@ -62,11 +63,7 @@ export default function ManageUsers() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <span className="loading loading-spinner loading-lg text-blue-600"></span>
-      </div>
-    );
+    return  <Loading />;
   }
 
   return (

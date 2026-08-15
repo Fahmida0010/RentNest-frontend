@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import axiosInstance from '@/lib/axios';
 import { Loader2, CheckCircle2, XCircle, Calendar, Mail, Phone, User, Home, DollarSign } from 'lucide-react';
+import Loading from '@/app/Loading/Loading';
 
 interface RequestData {
   id: string;
@@ -124,12 +125,7 @@ const ManageRequests: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col justify-center items-center h-64 gap-3">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-        <p className="text-gray-600 font-medium">Loading rental requests...</p>
-      </div>
-    );
+    return <Loading />;
   }
 
   return (

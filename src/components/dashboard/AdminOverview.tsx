@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Users, Home, CheckCircle, ClipboardList } from "lucide-react";
 import axiosInstance from "@/lib/axios";
+import Loading from "@/app/Loading/Loading";
 
 interface OverviewData {
   totalUsers: number;
@@ -25,10 +26,10 @@ export default function AdminOverview() {
         if (result.success) {
           setData(result.data);
         } else {
-          setError("ডাটা লোড করতে ব্যর্থ হয়েছে।");
+          setError("Data loading failed"); 
         }
       } catch (err) {
-        setError("সার্ভারে যোগাযোগ করা যাচ্ছে না।");
+        setError("server error occurred while fetching data");
       } finally {
         setLoading(false);
       }
@@ -38,11 +39,7 @@ export default function AdminOverview() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-48">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-      </div>
-    );
+    return  <Loading />;
   }
 
   if (error) {

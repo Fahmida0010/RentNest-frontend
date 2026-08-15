@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import Link from 'next/link';
 import axiosInstance from '@/lib/axios';
 import { Pencil, Trash2, Loader2, Plus, MapPin, Tag } from 'lucide-react';
+import Loading from "@/app/Loading/Loading";
 
 interface Property {
   id: string;
@@ -152,12 +153,7 @@ const MyProperties: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col justify-center items-center h-64 gap-3">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-        <p className="text-gray-600 font-medium">Loading your listings...</p>
-      </div>
-    );
+    return <Loading/>;
   }
 
   return (
