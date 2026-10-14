@@ -222,11 +222,11 @@ src
 ## Clone Repository
 
 ```bash
-git clone https://github.com/Fahmida0010/RentNest-backend.git
+git clone https://github.com/Fahmida0010/RentNest-frontend.git
 ```
 
 ```
-cd rentnest-server
+cd rentnest-frontend
 ```
 
 Install dependencies
