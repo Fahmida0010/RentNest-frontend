@@ -17,7 +17,15 @@ A modern **full-stack rental property marketplace** where tenants can discover r
 ##Admin Demo
 "admin email= ahsan@gmail.com 
  password= Ahsan26"
-
+tenant demo= {
+    "email": "rahiyan@example.com",
+    "password": "Rahiyan@123"
+}  
+Landlord demo ={
+    "email": "kobir@gmail.com",
+    "password": "Kobir26"
+}
+}
 ## 📂 GitHub Repository
 
 ### Frontend
